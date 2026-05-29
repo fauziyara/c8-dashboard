@@ -122,6 +122,25 @@ app.get('*', (req, res) => {
 });
 
 // ─── Start ───
+
+// ─── GitHub Webhook: Auto-deploy on push ───
+app.post('/api/webhook', (req, res) => {
+  const event = req.headers['x-github-event'];
+  if (event === 'push') {
+    console.log('[DEPLOY] GitHub push received, deploying...');
+    const { execSync } = require('child_process');
+    try {
+      execSync('cd /home/ubuntu/c8-dashboard && git pull origin main --force', { timeout: 30000 });
+      execSync('cd /home/ubuntu/c8-dashboard && npm install --production', { timeout: 60000 });
+      execSync('pm2 restart c8-dashboard c8-fetcher', { timeout: 10000 });
+      console.log('[DEPLOY] Success!');
+    } catch (err) {
+      console.error('[DEPLOY] Failed:', err.message);
+    }
+  }
+  res.json({ ok: true });
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('  ██████╗ █████╗ ███╗   ██╗████████╗ ██████╗ ██████╗  █████╗');
