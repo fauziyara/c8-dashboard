@@ -204,7 +204,7 @@
           rccBal += b.rCC || 0;
         }
       }
-      const portfolioUsd = (cc * ccPrice) + (ceth * ethPrice) + usdcx;
+      const portfolioUsd = ((cc + rccBal) * ccPrice) + (ceth * ethPrice) + usdcx;
       return { unclaimed, claimed, rcc, rccBal, portfolioUsd, cc, usdcx, ceth, success, failed, total };
     }
 
@@ -279,7 +279,7 @@
       document.getElementById('assetCC').textContent = fmtNum(t.cc);
       document.getElementById('assetUSDCx').textContent = fmtNum(t.usdcx);
       document.getElementById('assetCETH').textContent = fmtNum(t.ceth);
-      document.getElementById('assetRCC').textContent = `${fmtNum(t.rcc)} (locked: ${fmtNum(t.rccBal)})`;
+      document.getElementById('assetRCC').textContent = `${fmtNum(t.rccBal)}`;
       document.getElementById('activeAccounts').textContent = `${t.success}/${t.total}`;
 
       // Last update
@@ -317,7 +317,7 @@
           <td class="px-4 py-3"><div class="text-sm text-slate-200">${w.name||''}</div><div class="mono text-[10px] text-slate-500">${w.wallet ? w.wallet.slice(0,8)+'...' : ''}</div></td>
           <td class="px-4 py-3 text-right mono text-emerald-400 text-sm">${fmtNum(b.CC)}</td>
           <td class="px-4 py-3 text-right mono text-blue-400 text-sm">${fmtNum(r.unclaimed)}</td>
-          <td class="px-4 py-3 text-right mono text-amber-400 text-sm">${fmtNum(r.rCC)}</td>
+          <td class="px-4 py-3 text-right mono text-amber-400 text-sm">${fmtNum(b.rCC)}</td>
           <td class="px-4 py-3 text-center text-emerald-400 text-xs">✅</td>
         </tr>`;
       }).join('');
