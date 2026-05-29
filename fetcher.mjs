@@ -138,6 +138,8 @@ async function fetchReward(account) {
         unclaimed: Number(me?.rewardAccruedCc ?? 0),
         claimed: Number(me?.rewardTotalCc ?? 0),
         rCC: Number(me?.rebate ?? 0),
+        swaps: Number(me?.swapCount ?? 0),
+        rank: Number(me?.rank ?? 0),
     };
 }
 
@@ -239,7 +241,7 @@ async function fetchAll(accounts) {
     const startTime = Date.now();
     const wallets = [];
     const lastWallets = new Map((lastPushedData?.wallets || []).filter(w => !w.error).map(w => [w.name, w]));
-    let totalUnclaimed = 0, totalClaimed = 0, totalRCC = 0, totalCC = 0, totalUSDCx = 0, totalCETH = 0;
+    let totalUnclaimed = 0, totalClaimed = 0, totalRCC = 0, totalCC = 0, totalUSDCx = 0, totalCETH = 0, totalSwaps = 0;
     let successCount = 0, failCount = 0;
 
     // Fetch prices first
@@ -259,6 +261,7 @@ async function fetchAll(accounts) {
             totalUnclaimed += reward.unclaimed;
             totalClaimed += reward.claimed;
             totalRCC += reward.rCC;
+            totalSwaps += reward.swaps;
             totalCC += balance.CC;
             totalUSDCx += balance.USDCx;
             totalCETH += balance.cETH;
@@ -267,7 +270,7 @@ async function fetchAll(accounts) {
             wallets.push({
                 name: acc.name,
                 wallet: reward.wallet,
-                rewards: { unclaimed: reward.unclaimed, claimed: reward.claimed, rCC: reward.rCC },
+                rewards: { unclaimed: reward.unclaimed, claimed: reward.claimed, rCC: reward.rCC, swaps: reward.swaps, rank: reward.rank },
                 balance: { CC: balance.CC, rCC: balance.rCC, USDCx: balance.USDCx, cETH: balance.cETH },
             });
         } catch (err) {
@@ -298,6 +301,7 @@ async function fetchAll(accounts) {
             rCC: Math.round(totalRCC * 100) / 100,
             portfolio: Math.round((totalCC + totalUnclaimed + totalRCC) * 100) / 100,
             totalCC: Math.round(totalCC * 100) / 100,
+            totalSwaps: totalSwaps,
             totalUSDCx: Math.round(totalUSDCx * 10000) / 10000,
             totalCETH: Math.round(totalCETH * 1000000) / 1000000,
         },

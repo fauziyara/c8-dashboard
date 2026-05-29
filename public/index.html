@@ -112,6 +112,7 @@
         <div><span class="text-slate-400">USDCx:</span> <span class="mono font-bold text-blue-400" id="assetUSDCx">0</span></div>
         <div><span class="text-slate-400">cETH:</span> <span class="mono font-bold text-amber-400" id="assetCETH">0</span></div>
         <div><span class="text-slate-400">rCC:</span> <span class="mono font-bold text-yellow-400" id="assetRCC">0</span></div>
+        <div><span class="text-slate-400">Swaps:</span> <span class="mono font-bold text-purple-400" id="assetSwaps">0</span></div>
         <div class="ml-auto"><span class="text-slate-400">Active:</span> <span class="mono font-bold text-white" id="activeAccounts">0/0</span></div>
       </div>
     </div>
@@ -131,6 +132,8 @@
               <th class="px-4 sm:px-5 py-3 text-right">CC</th>
               <th class="px-4 sm:px-5 py-3 text-right">Unclaimed</th>
               <th class="px-4 sm:px-5 py-3 text-right">rCC</th>
+              <th class="px-4 sm:px-5 py-3 text-right">Swaps</th>
+              <th class="px-4 sm:px-5 py-3 text-right">Rank</th>
               <th class="px-4 sm:px-5 py-3 text-center">Status</th>
             </tr>
           </thead>
@@ -190,7 +193,7 @@
 
     // ─── Get totals ───
     function getTotals() {
-      let unclaimed = 0, claimed = 0, rcc = 0, rccBal = 0, cc = 0, usdcx = 0, ceth = 0;
+      let unclaimed = 0, claimed = 0, rcc = 0, rccBal = 0, cc = 0, usdcx = 0, ceth = 0, swaps = 0;
       let success = 0, failed = 0, total = 0;
       for (const v of Object.values(allData)) {
         const s = v.summary || {};
@@ -200,12 +203,14 @@
         success += s.success || 0; failed += s.failed || 0;
         for (const w of (v.wallets || [])) {
           const b = w.balance || {};
+          const wr = w.rewards || {};
           usdcx += b.USDCx || 0; ceth += b.cETH || 0;
           rccBal += b.rCC || 0;
+          swaps += wr.swaps || 0;
         }
       }
       const portfolioUsd = ((cc + rccBal) * ccPrice) + (ceth * ethPrice) + usdcx;
-      return { unclaimed, claimed, rcc, rccBal, portfolioUsd, cc, usdcx, ceth, success, failed, total };
+      return { unclaimed, claimed, rcc, rccBal, portfolioUsd, cc, usdcx, ceth, swaps, success, failed, total };
     }
 
     // ─── Format ───
@@ -280,6 +285,7 @@
       document.getElementById('assetUSDCx').textContent = fmtNum(t.usdcx);
       document.getElementById('assetCETH').textContent = fmtNum(t.ceth);
       document.getElementById('assetRCC').textContent = `${fmtNum(t.rccBal)}`;
+      document.getElementById('assetSwaps').textContent = t.swaps.toLocaleString();
       document.getElementById('activeAccounts').textContent = `${t.success}/${t.total}`;
 
       // Last update
@@ -304,12 +310,12 @@
 
       const tbody = document.getElementById('walletTable');
       if (wallets.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-16 text-center text-slate-500">No data yet...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-16 text-center text-slate-500">No data yet...</td></tr>';
         return;
       }
       tbody.innerHTML = wallets.map((w, i) => {
         if (w.error) {
-          return `<tr class="border-t border-white/5"><td class="px-4 py-3 mono text-xs text-slate-500">${i+1}</td><td class="px-4 py-3 text-slate-300">${w.name||''}</td><td colspan="3" class="px-4 py-3 text-center text-red-400 text-xs">${w.error}</td><td class="px-4 py-3 text-center text-red-400 text-xs">❌</td></tr>`;
+          return `<tr class="border-t border-white/5"><td class="px-4 py-3 mono text-xs text-slate-500">${i+1}</td><td class="px-4 py-3 text-slate-300">${w.name||''}</td><td colspan="5" class="px-4 py-3 text-center text-red-400 text-xs">${w.error}</td><td class="px-4 py-3 text-center text-red-400 text-xs">❌</td></tr>`;
         }
         const r = w.rewards || {}, b = w.balance || {};
         return `<tr class="border-t border-white/5 hover:bg-white/[0.02]">
@@ -318,6 +324,8 @@
           <td class="px-4 py-3 text-right mono text-emerald-400 text-sm">${fmtNum(b.CC)}</td>
           <td class="px-4 py-3 text-right mono text-blue-400 text-sm">${fmtNum(r.unclaimed)}</td>
           <td class="px-4 py-3 text-right mono text-amber-400 text-sm">${fmtNum(b.rCC)}</td>
+          <td class="px-4 py-3 text-right mono text-purple-400 text-sm">${r.swaps || 0}</td>
+          <td class="px-4 py-3 text-right mono text-cyan-400 text-sm">${r.rank ? '#' + r.rank.toLocaleString() : '-'}</td>
           <td class="px-4 py-3 text-center text-emerald-400 text-xs">✅</td>
         </tr>`;
       }).join('');
