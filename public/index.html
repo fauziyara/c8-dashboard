@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C8 Kardi</title>
+  <link rel="icon" href="/logo.jpg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #070a12; color: #e2e8f0; min-height: 100vh; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
+    .glass:hover { border-color: rgba(0,229,160,0.2); }
+    .card-enter { animation: cardIn 0.4s ease-out both; }
+    @keyframes cardIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .pulse-dot { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+    .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+    .gradient-text { background: linear-gradient(135deg, #00e5a0, #00a3ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .pl-positive { color: #10b981; }
+    .pl-negative { color: #ef4444; }
+  </style>
+</head>
+<body>
+
+  <header class="border-b border-white/5 px-4 sm:px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="/logo.jpg" alt="C8 Kardi" class="w-10 h-10 rounded-xl object-cover shadow-lg">
+        <div>
+          <h1 class="text-lg font-bold gradient-text">C8 Kardi</h1>
+          <p class="text-[10px] text-slate-500">Push-Based SSE Realtime</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div id="status" class="flex items-center gap-2 text-xs">
+          <span class="w-2 h-2 rounded-full bg-yellow-400 pulse-dot"></span>
+          <span class="text-slate-400" id="statusText">Connecting...</span>
+        </div>
+        <button onclick="resetPL()" class="glass rounded-lg px-3 py-1.5 text-xs text-slate-400 hover:text-white transition-all">🔄 Reset Harian</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+    <!-- Total Assets Banner -->
+    <div class="glass rounded-2xl p-5 sm:p-6 mb-6 card-enter" style="animation-delay:0.15s; border: 1px solid rgba(168,85,247,0.15);">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-xs text-purple-400 mb-1 flex items-center gap-2">
+            <span>💎</span> Total Aset
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span><span class="text-[10px] text-emerald-400">LIVE</span></span>
+          </div>
+          <div class="mono text-3xl sm:text-4xl font-bold text-white" id="totalAssets">$0</div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs text-slate-400 mb-1">dalam Rupiah</div>
+          <div class="mono text-lg sm:text-xl font-bold text-cyan-400" id="totalAssetsIdr">Rp 0</div>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-4 sm:gap-6 mt-3 text-xs text-slate-400">
+        <span>Portfolio: <span class="text-white mono" id="totalAssetsPortfolio">$0</span></span>
+        <span>Reward: <span class="text-emerald-400 mono" id="totalAssetsReward">$0</span></span>
+        <span>P&L: <span class="mono" id="totalAssetsPnl">+$0</span></span>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div class="glass rounded-2xl p-4 sm:p-5 card-enter" style="animation-delay:0.1s">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs text-slate-400">Unclaimed</span>
+          <span class="text-[10px] text-emerald-400">● LIVE</span>
+        </div>
+        <div class="mono text-2xl font-bold text-emerald-400" id="unclaimed">0</div>
+        <div class="text-xs text-slate-500 mt-1">CC</div>
+      </div>
+      <div class="glass rounded-2xl p-4 sm:p-5 card-enter" style="animation-delay:0.2s">
+        <div class="text-xs text-slate-400 mb-2">Claimed</div>
+        <div class="mono text-2xl font-bold text-white" id="claimed">0</div>
+        <div class="text-xs text-slate-500 mt-1">CC</div>
+      </div>
+      <div class="glass rounded-2xl p-4 sm:p-5 card-enter" style="animation-delay:0.3s">
+        <div class="text-xs text-slate-400 mb-2">Portfolio</div>
+        <div class="mono text-2xl font-bold text-purple-400" id="portfolio">$0</div>
+        <div class="text-xs text-slate-500 mt-1">Total Value (USD)</div>
+      </div>
+      <div class="glass rounded-2xl p-4 sm:p-5 card-enter" style="animation-delay:0.4s">
+        <div class="text-xs text-slate-400 mb-2">Reward Hari Ini</div>
+        <div class="mono text-2xl font-bold" id="pnl">0</div>
+        <div class="text-xs text-slate-500 mt-1" id="pnlDetail">CC hari ini</div>
+      </div>
+    </div>
+
+    <!-- Price Info -->
+    <div class="glass rounded-2xl p-4 mb-6 card-enter" style="animation-delay:0.45s">
+      <div class="flex flex-wrap items-center gap-4 sm:gap-6 text-sm">
+        <div><span class="text-slate-400">CC Price:</span> <span class="mono font-bold text-emerald-400" id="ccPrice">$0.16</span></div>
+        <div><span class="text-slate-400">24h:</span> <span class="mono font-bold" id="ccChange">0%</span></div>
+        <div><span class="text-slate-400">USD/IDR:</span> <span class="mono font-bold text-cyan-400" id="usdIdr">Rp 16,500</span></div>
+        <div class="ml-auto"><span class="text-slate-400">Last:</span> <span class="mono text-xs" id="lastUpdate">-</span></div>
+      </div>
+    </div>
+
+    <!-- Assets -->
+    <div class="glass rounded-2xl p-4 mb-6 card-enter" style="animation-delay:0.5s">
+      <div class="flex flex-wrap items-center gap-4 sm:gap-6 text-sm">
+        <div><span class="text-slate-400">CC:</span> <span class="mono font-bold text-emerald-400" id="assetCC">0</span></div>
+        <div><span class="text-slate-400">USDCx:</span> <span class="mono font-bold text-blue-400" id="assetUSDCx">0</span></div>
+        <div><span class="text-slate-400">cETH:</span> <span class="mono font-bold text-amber-400" id="assetCETH">0</span></div>
+        <div><span class="text-slate-400">rCC:</span> <span class="mono font-bold text-yellow-400" id="assetRCC">0</span></div>
+        <div class="ml-auto"><span class="text-slate-400">Active:</span> <span class="mono font-bold text-white" id="activeAccounts">0/0</span></div>
+      </div>
+    </div>
+
+    <!-- Wallets Table -->
+    <div class="glass rounded-2xl overflow-hidden card-enter" style="animation-delay:0.6s">
+      <div class="px-4 sm:px-5 py-3 border-b border-white/5 flex items-center justify-between">
+        <h2 class="text-sm font-semibold text-slate-300">📊 Wallets</h2>
+        <input type="text" id="search" placeholder="Search..." class="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-300 placeholder-slate-500 focus:outline-none focus:border-teal-500/50 w-32 sm:w-48">
+      </div>
+      <div class="overflow-x-auto scrollbar-thin">
+        <table class="w-full">
+          <thead>
+            <tr class="text-[10px] text-slate-500 uppercase tracking-wider">
+              <th class="px-4 sm:px-5 py-3 text-left">#</th>
+              <th class="px-4 sm:px-5 py-3 text-left">Name</th>
+              <th class="px-4 sm:px-5 py-3 text-right">CC</th>
+              <th class="px-4 sm:px-5 py-3 text-right">Unclaimed</th>
+              <th class="px-4 sm:px-5 py-3 text-right">rCC</th>
+              <th class="px-4 sm:px-5 py-3 text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody id="walletTable">
+            <tr><td colspan="6" class="px-5 py-16 text-center text-slate-500">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-white/5 px-4 sm:px-6 py-4 mt-8">
+    <div class="max-w-7xl mx-auto flex items-center justify-between text-[10px] text-slate-600">
+      <span>C8 Kardi v2.0</span>
+      <span>💰 CANTOR8</span>
+    </div>
+  </footer>
+
+  <script>
+    // ─── State ───
+    let allData = {};
+    let ccPrice = 0.16;
+    let ethPrice = 2500;
+    let usdToIdr = 16500;
+    let plBaseline = null;
+
+    // ─── P&L: Daily reward tracking (auto-reset jam 10 WIB) ───
+    function loadBaseline() {
+      try {
+        const s = localStorage.getItem('c8plBaseline');
+        if (s) plBaseline = JSON.parse(s);
+      } catch {}
+      checkDailyReset();
+    }
+    function saveBaseline() {
+      const t = getTotals();
+      plBaseline = {
+        portfolioUsd: t.portfolioUsd,
+        cc: t.cc,
+        unclaimed: t.unclaimed,
+        timestamp: Date.now(),
+        date: new Date().toISOString().slice(0, 10)
+      };
+      localStorage.setItem('c8plBaseline', JSON.stringify(plBaseline));
+    }
+    function checkDailyReset() {
+      if (!plBaseline) return;
+      const now = new Date();
+      const wibHour = (now.getUTCHours() + 7) % 24;
+      const today = now.toISOString().slice(0, 10);
+      if (plBaseline.date !== today && wibHour >= 10) {
+        console.log('Auto-reset P&L: new day');
+        saveBaseline();
+      }
+    }
+    function resetPL() { saveBaseline(); render(); }
+
+    // ─── Get totals ───
+    function getTotals() {
+      let unclaimed = 0, claimed = 0, rcc = 0, rccBal = 0, cc = 0, usdcx = 0, ceth = 0;
+      let success = 0, failed = 0, total = 0;
+      for (const v of Object.values(allData)) {
+        const s = v.summary || {};
+        unclaimed += s.unclaimed || 0; claimed += s.claimed || 0;
+        rcc += s.rCC || 0;
+        cc += s.totalCC || 0; total += s.total || 0;
+        success += s.success || 0; failed += s.failed || 0;
+        for (const w of (v.wallets || [])) {
+          const b = w.balance || {};
+          usdcx += b.USDCx || 0; ceth += b.cETH || 0;
+          rccBal += b.rCC || 0;
+        }
+      }
+      const portfolioUsd = (cc * ccPrice) + (ceth * ethPrice) + usdcx;
+      return { unclaimed, claimed, rcc, rccBal, portfolioUsd, cc, usdcx, ceth, success, failed, total };
+    }
+
+    // ─── Format ───
+    function fmtNum(n) {
+      if (!n || isNaN(n)) return '0';
+      if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+      if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+      return Number(n).toFixed(2);
+    }
+
+    // ─── Render ───
+    function render() {
+      const t = getTotals();
+
+      // Cards
+      document.getElementById('unclaimed').textContent = fmtNum(t.unclaimed);
+      document.getElementById('claimed').textContent = fmtNum(t.claimed);
+      document.getElementById('portfolio').textContent = '$' + fmtNum(t.portfolioUsd);
+
+      // Total Assets = Portfolio (USD) + Unclaimed (USD)
+      const unclaimedUsd = t.unclaimed * ccPrice;
+      const totalAssetsUsd = t.portfolioUsd + unclaimedUsd;
+      const totalAssetsIdr = totalAssetsUsd * usdToIdr;
+      document.getElementById('totalAssets').textContent = '$' + fmtNum(totalAssetsUsd);
+      document.getElementById('totalAssetsIdr').textContent = 'Rp ' + Math.round(totalAssetsIdr).toLocaleString('id-ID');
+      document.getElementById('totalAssetsPortfolio').textContent = '$' + fmtNum(t.portfolioUsd);
+      document.getElementById('totalAssetsReward').textContent = '$' + fmtNum(unclaimedUsd);
+
+      // P&L
+      if (plBaseline) {
+        const pl = t.portfolioUsd - plBaseline.portfolioUsd;
+        const sign = pl >= 0 ? '+' : '';
+        const cls = pl >= 0 ? 'pl-positive' : 'pl-negative';
+        const dailyCc = t.unclaimed - (plBaseline.unclaimed || 0);
+        const dSign = dailyCc >= 0 ? '+' : '';
+        const dCls = dailyCc >= 0 ? 'pl-positive' : 'pl-negative';
+        document.getElementById('pnl').className = `mono text-2xl font-bold ${dCls}`;
+        document.getElementById('pnl').textContent = `${dSign}${fmtNum(dailyCc)}`;
+        const dailyRewardCc = t.unclaimed - (plBaseline.unclaimed || 0);
+        const dailyRewardUsd = dailyRewardCc * ccPrice;
+        const drSign = dailyRewardCc >= 0 ? '+' : '';
+        const drCls = dailyRewardCc >= 0 ? 'pl-positive' : 'pl-negative';
+        document.getElementById('pnlDetail').textContent = `${drSign}${fmtNum(dailyRewardCc)} CC hari ini (${drSign}$${fmtNum(dailyRewardUsd)})`;
+        const totalPnlEl = document.getElementById('totalAssetsPnl');
+        if (totalPnlEl) {
+          totalPnlEl.textContent = `${drSign}${fmtNum(dailyRewardCc)} CC`;
+          totalPnlEl.className = `mono ${drCls}`;
+        }
+      }
+
+      // Price
+      document.getElementById('ccPrice').textContent = `$${ccPrice.toFixed(4)}`;
+      document.getElementById('usdIdr').textContent = `Rp ${Math.round(usdToIdr).toLocaleString('id-ID')}`;
+
+      // Extract price from data
+      for (const v of Object.values(allData)) {
+        if (v.price) {
+          ccPrice = v.price.price || 0.16;
+          const change = (v.price.change24h || 0) * 100;
+          const changeEl = document.getElementById('ccChange');
+          changeEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+          changeEl.className = `mono font-bold ${change >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+          break;
+        }
+      }
+      for (const v of Object.values(allData)) {
+        if (v.usdToIdr) { usdToIdr = v.usdToIdr; break; }
+      }
+
+      // Assets
+      document.getElementById('assetCC').textContent = fmtNum(t.cc);
+      document.getElementById('assetUSDCx').textContent = fmtNum(t.usdcx);
+      document.getElementById('assetCETH').textContent = fmtNum(t.ceth);
+      document.getElementById('assetRCC').textContent = `${fmtNum(t.rcc)} (locked: ${fmtNum(t.rccBal)})`;
+      document.getElementById('activeAccounts').textContent = `${t.success}/${t.total}`;
+
+      // Last update
+      let latest = null;
+      for (const v of Object.values(allData)) {
+        if (!latest || v.timestamp > latest) latest = v.timestamp;
+      }
+      document.getElementById('lastUpdate').textContent = latest ? new Date(latest).toLocaleTimeString('id-ID') : '-';
+
+      // Wallets table
+      renderWallets();
+    }
+
+    // ─── Wallets ───
+    function renderWallets() {
+      const search = (document.getElementById('search').value || '').toLowerCase();
+      let wallets = [];
+      for (const d of Object.values(allData)) {
+        for (const w of (d.wallets || [])) wallets.push(w);
+      }
+      if (search) wallets = wallets.filter(w => (w.name || '').toLowerCase().includes(search));
+
+      const tbody = document.getElementById('walletTable');
+      if (wallets.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-16 text-center text-slate-500">No data yet...</td></tr>';
+        return;
+      }
+      tbody.innerHTML = wallets.map((w, i) => {
+        if (w.error) {
+          return `<tr class="border-t border-white/5"><td class="px-4 py-3 mono text-xs text-slate-500">${i+1}</td><td class="px-4 py-3 text-slate-300">${w.name||''}</td><td colspan="3" class="px-4 py-3 text-center text-red-400 text-xs">${w.error}</td><td class="px-4 py-3 text-center text-red-400 text-xs">❌</td></tr>`;
+        }
+        const r = w.rewards || {}, b = w.balance || {};
+        return `<tr class="border-t border-white/5 hover:bg-white/[0.02]">
+          <td class="px-4 py-3 mono text-xs text-slate-500">${i+1}</td>
+          <td class="px-4 py-3"><div class="text-sm text-slate-200">${w.name||''}</div><div class="mono text-[10px] text-slate-500">${w.wallet ? w.wallet.slice(0,8)+'...' : ''}</div></td>
+          <td class="px-4 py-3 text-right mono text-emerald-400 text-sm">${fmtNum(b.CC)}</td>
+          <td class="px-4 py-3 text-right mono text-blue-400 text-sm">${fmtNum(r.unclaimed)}</td>
+          <td class="px-4 py-3 text-right mono text-amber-400 text-sm">${fmtNum(r.rCC)}</td>
+          <td class="px-4 py-3 text-center text-emerald-400 text-xs">✅</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ─── Fetch Data ───
+    async function fetchData() {
+      try {
+        const resp = await fetch('/api/data');
+        const data = await resp.json();
+        if (data.data && Object.keys(data.data).length > 0) {
+          allData = data.data;
+          if (!plBaseline) saveBaseline();
+          render();
+          setStatus(true);
+        }
+      } catch (e) {
+        console.log('Fetch error:', e);
+        setStatus(false);
+      }
+    }
+
+    function setStatus(ok) {
+      const el = document.getElementById('status');
+      const text = document.getElementById('statusText');
+      if (ok) {
+        el.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span><span class="text-slate-400" id="statusText">Live</span>';
+      } else {
+        el.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400 pulse-dot"></span><span class="text-slate-400" id="statusText">Error</span>';
+      }
+    }
+
+    // ─── SSE (optional, fallback to polling) ───
+    function connectSSE() {
+      try {
+        const sse = new EventSource('/api/stream');
+        sse.addEventListener('init', (e) => {
+          const d = JSON.parse(e.data);
+          allData = d.data || {};
+          if (!plBaseline) saveBaseline();
+          render();
+          setStatus(true);
+        });
+        sse.addEventListener('update', (e) => {
+          const d = JSON.parse(e.data);
+          if (d.vps_id && d.data) {
+            allData[d.vps_id] = d.data;
+            render();
+          }
+          setStatus(true);
+        });
+        sse.onerror = () => {
+          sse.close();
+          // Fallback to polling
+          setInterval(fetchData, 5000);
+        };
+      } catch (e) {
+        // Fallback to polling
+        setInterval(fetchData, 5000);
+      }
+    }
+
+    // ─── Init ───
+    loadBaseline();
+    fetchData(); // Immediate fetch
+    connectSSE();
+    setInterval(fetchData, 30000); // Backup polling every 30s
+    document.getElementById('search').addEventListener('input', renderWallets);
+  </script>
+</body>
+</html>

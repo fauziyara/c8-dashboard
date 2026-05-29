@@ -1,0 +1,6 @@
+node_modules/
+.env
+.env.*
+data/
+*.log
+pm2.config.cjs
