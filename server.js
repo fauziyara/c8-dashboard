@@ -182,18 +182,19 @@ app.post('/api/reset-pnl', (req, res) => {
   const ethPrice = latest.ethPrice || 2500;
   const usdToIdr = latest.usdToIdr || 17000;
 
-  let portfolioUsd = 0, unclaimed = 0;
+  let portfolioUsd = 0, unclaimed = 0, totalCC = 0;
   for (const w of wallets) {
     if (w.error) continue;
     const b = w.balance || {};
     const r = w.rewards || {};
+    totalCC += (b.CC || 0);
     portfolioUsd += (b.CC || 0) * price + (b.rCC || 0) * price + (b.USDCx || 0) + (b.cETH || 0) * ethPrice;
     unclaimed += r.unclaimed || 0;
   }
 
-  pnlBaseline = { portfolioUsd, unclaimed, timestamp: Date.now() };
+  pnlBaseline = { portfolioUsd, unclaimed, totalCC, timestamp: Date.now() };
   saveData();
-  console.log(`[P&L] Baseline reset: $${portfolioUsd.toFixed(2)}, ${unclaimed.toFixed(2)} CC`);
+  console.log(`[P&L] Baseline reset: $${portfolioUsd.toFixed(2)}, ${unclaimed.toFixed(2)} CC, wallet CC: ${totalCC.toFixed(2)}`);
   res.json({ success: true, pnlBaseline });
 });
 

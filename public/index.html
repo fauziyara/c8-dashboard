@@ -345,9 +345,17 @@
         const pl = totalNow - totalBase;
         const sign = pl >= 0 ? '+' : '';
         const cls = pl >= 0 ? 'pl-positive' : 'pl-negative';
+
+        // CC change (detect stuck CC)
+        const ccNow = t.cc || 0;
+        const ccBase = pnlBaseline.totalCC || 0;
+        const ccChange = ccNow - ccBase;
+        const ccSign = ccChange >= 0 ? '+' : '';
+        const ccCls = ccChange >= 0 ? 'text-emerald-400' : 'text-rose-400';
+
         document.getElementById('pnl').className = `mono text-xl sm:text-2xl font-bold ${cls}`;
         document.getElementById('pnl').textContent = `${sign}$${fmtNum(pl)}`;
-        document.getElementById('pnlDetail').textContent = `keseluruhan ${sign}$${fmtNum(pl)}`;
+        document.getElementById('pnlDetail').innerHTML = `CC ${ccSign}${fmtNum(ccChange)} <span class="${ccCls}">${ccChange < 0 ? '⚠️ sangkut' : '✅'}</span> · ${sign}$${fmtNum(pl)}`;
         const el = document.getElementById('totalAssetsPnl');
         if (el) { el.textContent = `${sign}$${fmtNum(pl)}`; el.className = `mono font-semibold ${cls}`; }
       }
