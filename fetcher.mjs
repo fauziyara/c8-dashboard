@@ -268,8 +268,9 @@ async function fetchAll(accounts) {
     const botData = parseBotScreen();
     const botWallets = botData?.wallets || [];
     const botUptime = botWallets[0]?.uptime || '';
+    const botScreens = botData?.screens || 0;
     if (botWallets.length > 0) {
-        console.log(`  🤖 Bot screen: ${botWallets.length} wallets parsed, uptime: ${botUptime}`);
+        console.log(`  🤖 Bot screen: ${botWallets.length} wallets from ${botScreens} screen(s), uptime: ${botUptime}`);
     }
 
     for (const acc of accounts) {
