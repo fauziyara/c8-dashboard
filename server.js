@@ -6,30 +6,82 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Config ───
 const API_KEY = process.env.API_KEY || 'c8dashboard2025';
 const PORT = process.env.PORT || 3456;
 
 // ─── In-Memory Store ───
-// Key: vps_id, Value: { timestamp, wallets[], summary }
 const store = new Map();
+let firstReceivedAt = null; // Track uptime from first data received
+let pnlBaseline = null; // Server-side P&L baseline (shared across devices)
+const DATA_FILE = path.join(__dirname, 'data.json');
+
+// Load persisted data on startup
+function loadData() {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const saved = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+      if (saved.store) {
+        for (const [key, val] of Object.entries(saved.store)) {
+          store.set(key, val);
+        }
+      }
+      if (saved.pnlBaseline) pnlBaseline = saved.pnlBaseline;
+      if (saved.firstReceivedAt) firstReceivedAt = saved.firstReceivedAt;
+      console.log(`[BOOT] Loaded ${store.size} VPS from cache`);
+    }
+  } catch (err) {
+    console.log(`[BOOT] No cache: ${err.message}`);
+  }
+}
+
+// Save data to file
+function saveData() {
+  try {
+    const obj = {};
+    for (const [key, val] of store) obj[key] = val;
+    fs.writeFileSync(DATA_FILE, JSON.stringify({ store: obj, pnlBaseline, firstReceivedAt }));
+  } catch {}
+}
+
+loadData();
+
+// ─── Root route: inject live data into HTML ───
+app.get('/', (req, res) => {
+  let html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+  const all = {};
+  for (const [key, val] of store) all[key] = val;
+  const inject = `<script>window.__INITIAL_DATA__=${JSON.stringify(all)};</script>`;
+  html = html.replace('</head>', inject + '\n</head>');
+  res.setHeader('Content-Type', 'text/html');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.send(html);
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── SSE Clients ───
 const sseClients = new Set();
-
 function broadcastSSE(event, data) {
   const msg = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   for (const client of sseClients) {
     try { client.write(msg); } catch { sseClients.delete(client); }
   }
 }
+
+// Heartbeat: keep SSE connections alive every 15s
+setInterval(() => {
+  for (const client of sseClients) {
+    try { client.write(': heartbeat\n\n'); } catch { sseClients.delete(client); }
+  }
+}, 15000);
 
 // ══════════════════════════════════════════════
 //   API ENDPOINTS
@@ -42,12 +94,13 @@ app.post('/api/push', (req, res) => {
     return res.status(401).json({ error: 'Invalid API key' });
   }
 
-  const { vps_id, timestamp, wallets, summary, price, ethPrice, usdToIdr } = req.body;
+  const { vps_id, timestamp, wallets, summary, price, ethPrice, usdToIdr, startedAt, botUptime } = req.body;
   if (!vps_id) {
     return res.status(400).json({ error: 'vps_id required' });
   }
 
   // Store data
+  if (!firstReceivedAt) firstReceivedAt = new Date().toISOString();
   store.set(vps_id, {
     vps_id,
     timestamp: timestamp || new Date().toISOString(),
@@ -56,7 +109,9 @@ app.post('/api/push', (req, res) => {
     price: price || null,
     ethPrice: ethPrice || null,
     usdToIdr: usdToIdr || null,
-    receivedAt: new Date().toISOString()
+    receivedAt: new Date().toISOString(),
+    uptimeSince: startedAt || firstReceivedAt,
+    botUptime: botUptime || ''
   });
 
   // Broadcast to all SSE clients
@@ -66,6 +121,7 @@ app.post('/api/push', (req, res) => {
     data: store.get(vps_id)
   });
 
+  saveData();
   console.log(`[PUSH] ${vps_id} — ${(wallets || []).length} wallets at ${new Date().toLocaleTimeString()}`);
   res.json({ success: true, vps_id });
 });
@@ -103,12 +159,42 @@ app.get('/api/stream', (req, res) => {
 
 // ─── GET /api/health ───
 app.get('/api/health', (req, res) => {
+  let latest = null;
+  for (const [key, val] of store) latest = val;
   res.json({
     status: 'ok',
     uptime: process.uptime(),
     vps_count: store.size,
-    sse_clients: sseClients.size
+    sse_clients: sseClients.size,
+    latest: latest,
+    pnlBaseline: pnlBaseline
   });
+});
+
+// ─── POST /api/reset-pnl — Reset P&L baseline ───
+app.post('/api/reset-pnl', (req, res) => {
+  let latest = null;
+  for (const [key, val] of store) latest = val;
+  if (!latest) return res.status(400).json({ error: 'No data yet' });
+
+  const wallets = latest.wallets || [];
+  const price = latest.price?.price || 0.16;
+  const ethPrice = latest.ethPrice || 2500;
+  const usdToIdr = latest.usdToIdr || 17000;
+
+  let portfolioUsd = 0, unclaimed = 0;
+  for (const w of wallets) {
+    if (w.error) continue;
+    const b = w.balance || {};
+    const r = w.rewards || {};
+    portfolioUsd += (b.CC || 0) * price + (b.rCC || 0) * price + (b.USDCx || 0) + (b.cETH || 0) * ethPrice;
+    unclaimed += r.unclaimed || 0;
+  }
+
+  pnlBaseline = { portfolioUsd, unclaimed, timestamp: Date.now() };
+  saveData();
+  console.log(`[P&L] Baseline reset: $${portfolioUsd.toFixed(2)}, ${unclaimed.toFixed(2)} CC`);
+  res.json({ success: true, pnlBaseline });
 });
 
 // ─── Command Center ───
@@ -118,7 +204,14 @@ app.get('/command', (req, res) => {
 
 // ─── SPA Fallback ───
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  let html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+  const all = {};
+  for (const [key, val] of store) all[key] = val;
+  const inject = `<script>window.__INITIAL_DATA__=${JSON.stringify(all)};</script>`;
+  html = html.replace('</head>', inject + '\n</head>');
+  res.setHeader('Content-Type', 'text/html');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.send(html);
 });
 
 // ─── Start ───

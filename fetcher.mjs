@@ -3,7 +3,8 @@
 //   Fetch rewards + balance → push to dashboard API
 // ══════════════════════════════════════════════════════════
 
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
+import { execSync } from 'child_process';
 import 'dotenv/config';
 import axios from 'axios';
 import * as ed from '@noble/ed25519';
@@ -20,7 +21,7 @@ const SWAP_API = config.api.swap_url;
 
 const DASHBOARD_URL = 'http://127.0.0.1:3456';
 const DASHBOARD_KEY = 'c8dashboard2025';
-const VPS_ID = 'vps1-c8new';
+const VPS_ID = 'sumopod-c8';
 const FETCH_INTERVAL = 30000; // 30 detik
 
 const BASE_HEADERS = {
@@ -236,6 +237,19 @@ async function fetchETHPrice() {
     return 2500;
 }
 
+// ─── Parse Bot Screen ───
+function parseBotScreen() {
+    try {
+        const scriptPath = new URL('./parse-bot-screen.sh', import.meta.url).pathname;
+        if (!existsSync(scriptPath)) return null;
+        const output = execSync(`bash "${scriptPath}"`, { timeout: 5000, encoding: 'utf-8' }).trim();
+        return JSON.parse(output);
+    } catch (err) {
+        console.log(`  ⚠️  Bot screen parse failed: ${err.message}`);
+        return null;
+    }
+}
+
 // ─── Fetch All ───
 async function fetchAll(accounts) {
     const startTime = Date.now();
@@ -250,6 +264,14 @@ async function fetchAll(accounts) {
     const usdToIdr = await fetchUsdToIdr();
     console.log(`  💰 CC Price: $${ccPrice.price} (${(ccPrice.change24h * 100).toFixed(2)}% 24h) | USD/IDR: ${usdToIdr}`);
 
+    // Parse bot screen for swap/rank/status
+    const botData = parseBotScreen();
+    const botWallets = botData?.wallets || [];
+    const botUptime = botWallets[0]?.uptime || '';
+    if (botWallets.length > 0) {
+        console.log(`  🤖 Bot screen: ${botWallets.length} wallets parsed, uptime: ${botUptime}`);
+    }
+
     for (const acc of accounts) {
         try {
             console.log(`  📡 ${acc.name}...`);
@@ -261,17 +283,36 @@ async function fetchAll(accounts) {
             totalUnclaimed += reward.unclaimed;
             totalClaimed += reward.claimed;
             totalRCC += reward.rCC;
-            totalSwaps += reward.swaps;
-            totalCC += balance.CC;
-            totalUSDCx += balance.USDCx;
-            totalCETH += balance.cETH;
             successCount++;
+
+            // Match bot data by index (bot uses 1-based numbering)
+            const botIdx = successCount - 1;
+            const botW = botWallets[botIdx] || {};
+            const hasBotData = botW.num > 0;
+
+            // Use bot data when available, fallback to API
+            const ccVal = hasBotData ? botW.cc : balance.CC;
+            const usdcxVal = hasBotData ? botW.usdcx : balance.USDCx;
+            const cethVal = hasBotData ? botW.ceth : balance.cETH;
+            const rccVal = hasBotData ? botW.rcc : balance.rCC;
+            const swapVal = hasBotData ? botW.swap : reward.swaps;
+            const rankVal = hasBotData ? botW.rank : reward.rank;
+            const rewardVal = hasBotData ? botW.reward : reward.unclaimed;
+            const drewVal = hasBotData ? parseFloat((botW.drew || '+0').replace('+', '')) : 0;
+            const statusVal = botW.status || '';
+
+            totalCC += ccVal;
+            totalUSDCx += usdcxVal;
+            totalCETH += cethVal;
+            totalRCC += rccVal;
+            totalSwaps += swapVal;
 
             wallets.push({
                 name: acc.name,
                 wallet: reward.wallet,
-                rewards: { unclaimed: reward.unclaimed, claimed: reward.claimed, rCC: reward.rCC, swaps: reward.swaps, rank: reward.rank },
-                balance: { CC: balance.CC, rCC: balance.rCC, USDCx: balance.USDCx, cETH: balance.cETH },
+                rewards: { unclaimed: rewardVal, claimed: reward.claimed, rCC: rccVal, swaps: swapVal, rank: rankVal, drew: drewVal },
+                balance: { CC: ccVal, rCC: rccVal, USDCx: usdcxVal, cETH: cethVal },
+                status: statusVal,
             });
         } catch (err) {
             failCount++;
@@ -291,6 +332,8 @@ async function fetchAll(accounts) {
         vps_id: VPS_ID,
         timestamp: new Date().toISOString(),
         fetchTime: Date.now() - startTime,
+        startedAt: fetcherStartedAt,
+        botUptime: botUptime,
         wallets,
         summary: {
             total: accounts.length,
@@ -325,6 +368,9 @@ async function pushToDashboard(data) {
         console.log(`  ❌ Push failed: ${err.message}`);
     }
 }
+
+// ─── Fetcher Start Time ───
+const fetcherStartedAt = new Date().toISOString();
 
 // ─── Main Loop ───
 async function main() {
