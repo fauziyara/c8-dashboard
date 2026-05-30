@@ -4,3 +4,4 @@ node_modules/
 data/
 *.log
 pm2.config.cjs
+data.json
