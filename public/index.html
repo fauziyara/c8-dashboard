@@ -223,7 +223,7 @@
     <!-- Wallets Table -->
     <div class="glass rounded-xl overflow-hidden card-enter" style="animation-delay:0.4s">
       <div class="px-4 sm:px-5 py-3 border-b border-white/[0.06] flex items-center justify-between">
-        <h2 class="text-xs font-bold text-slate-300 tracking-wider uppercase">Wallets</h2>
+        <h2 class="text-xs font-bold text-slate-300 tracking-wider uppercase flex items-center gap-2">Wallets <span id="walletCount" class="text-[10px] font-normal bg-teal-500/10 text-teal-400 px-2 py-0.5 rounded-full">0</span></h2>
         <input type="text" id="search" placeholder="Search..." class="bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-slate-300 placeholder-slate-500 focus:outline-none focus:border-teal-500/40 w-32 sm:w-48 transition-all">
       </div>
       <div class="overflow-x-auto scrollbar-thin">
@@ -412,7 +412,7 @@
 
     function renderWalletTable(totals) {
       const search = (document.getElementById('search').value || '').toLowerCase();
-      let rows = []; let idx = 0;
+      let rows = []; let idx = 0; let totalWallets = 0;
       // Totals
       let tCC = 0, tUSDCx = 0, tCETH = 0, tRCC = 0, tSwaps = 0, tReward = 0, tDRew = 0;
 
@@ -420,6 +420,7 @@
         for (const w of (vps.wallets || [])) {
           idx++;
           if (w.error) continue;
+          totalWallets++;
           const name = w.name || `Wallet ${idx}`;
           if (search && !name.toLowerCase().includes(search) && !(w.wallet || '').toLowerCase().includes(search)) continue;
           const b = w.balance || {}; const r = w.rewards || {};
@@ -482,6 +483,9 @@
 
       document.getElementById('walletTable').innerHTML = rows.join('') ||
         '<tr><td colspan="11" class="px-5 py-16 text-center text-slate-500 text-sm">No wallets found</td></tr>';
+
+      // Update wallet count
+      document.getElementById('walletCount').textContent = totalWallets;
     }
 
     // ─── Data persistence ───
