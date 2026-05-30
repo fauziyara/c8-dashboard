@@ -314,6 +314,8 @@ async function fetchAll(accounts) {
                 rewards: { unclaimed: rewardVal, claimed: reward.claimed, rCC: rccVal, swaps: swapVal, rank: rankVal, drew: drewVal },
                 balance: { CC: ccVal, rCC: rccVal, USDCx: usdcxVal, cETH: cethVal },
                 status: statusVal,
+                uptime: hasBotData ? botW.uptime : '',
+                screen: hasBotData ? botW.screen : '',
             });
         } catch (err) {
             failCount++;

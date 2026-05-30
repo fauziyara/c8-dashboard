@@ -439,8 +439,8 @@
           // Highlight
           const isHigh = ccVal > 50 || rewardVal > 25;
           const rowBg = isHigh ? 'bg-emerald-500/[0.03]' : '';
-          // Uptime from bot screen (same for all wallets)
-          const uptimeStr = vps.botUptime || calcUptime(vps.uptimeSince);
+          // Uptime per-wallet from bot screen, fallback to global
+          const uptimeStr = w.uptime || vps.botUptime || calcUptime(vps.uptimeSince);
           const dRewCls = dRew >= 0 ? 'text-emerald-400' : 'text-red-400';
           rows.push(`
             <tr class="border-b border-white/[0.03] ${rowBg} hover:bg-white/[0.03] transition-colors">
