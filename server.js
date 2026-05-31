@@ -21,6 +21,7 @@ const PORT = process.env.PORT || 3456;
 const store = new Map();
 let firstReceivedAt = null; // Track uptime from first data received
 let pnlBaseline = null; // Server-side P&L baseline (shared across devices)
+let earnBaseline = null; // Daily earn baseline (auto-reset at 10 AM)
 const DATA_FILE = path.join(__dirname, 'data.json');
 
 // Load persisted data on startup
@@ -34,6 +35,7 @@ function loadData() {
         }
       }
       if (saved.pnlBaseline) pnlBaseline = saved.pnlBaseline;
+      if (saved.earnBaseline) earnBaseline = saved.earnBaseline;
       if (saved.firstReceivedAt) firstReceivedAt = saved.firstReceivedAt;
       console.log(`[BOOT] Loaded ${store.size} VPS from cache`);
     }
@@ -47,7 +49,7 @@ function saveData() {
   try {
     const obj = {};
     for (const [key, val] of store) obj[key] = val;
-    fs.writeFileSync(DATA_FILE, JSON.stringify({ store: obj, pnlBaseline, firstReceivedAt }));
+    fs.writeFileSync(DATA_FILE, JSON.stringify({ store: obj, pnlBaseline, earnBaseline, firstReceivedAt }));
   } catch {}
 }
 
@@ -82,6 +84,42 @@ setInterval(() => {
     try { client.write(': heartbeat\n\n'); } catch { sseClients.delete(client); }
   }
 }, 15000);
+
+// ─── Auto-reset earn baseline at 10 AM daily ───
+function resetEarnBaseline() {
+  let totalDrew = 0;
+  for (const [key, val] of store) {
+    for (const w of (val.wallets || [])) {
+      if (w.error) continue;
+      totalDrew += (w.rewards || {}).drew || 0;
+    }
+  }
+  earnBaseline = { totalDrew, timestamp: Date.now() };
+  saveData();
+  broadcastSSE('earn-reset', { earnBaseline });
+  console.log(`[EARN] Baseline reset at 10 AM: ${totalDrew.toFixed(2)} CC`);
+}
+
+function scheduleDailyReset() {
+  const now = new Date();
+  const target = new Date();
+  target.setHours(10, 0, 0, 0); // 10:00 AM
+  
+  // If it's already past 10 AM today, schedule for tomorrow
+  if (now >= target) {
+    target.setDate(target.getDate() + 1);
+  }
+  
+  const delay = target - now;
+  console.log(`[EARN] Auto-reset scheduled at ${target.toLocaleString()} (in ${Math.round(delay/1000/60)} minutes)`);
+  
+  setTimeout(() => {
+    resetEarnBaseline();
+    // Schedule next reset in 24 hours
+    setInterval(resetEarnBaseline, 24 * 60 * 60 * 1000);
+  }, delay);
+}
+scheduleDailyReset();
 
 // ══════════════════════════════════════════════
 //   API ENDPOINTS
@@ -167,7 +205,8 @@ app.get('/api/health', (req, res) => {
     vps_count: store.size,
     sse_clients: sseClients.size,
     latest: latest,
-    pnlBaseline: pnlBaseline
+    pnlBaseline: pnlBaseline,
+    earnBaseline: earnBaseline
   });
 });
 
@@ -196,6 +235,12 @@ app.post('/api/reset-pnl', (req, res) => {
   saveData();
   console.log(`[P&L] Baseline reset: $${portfolioUsd.toFixed(2)}, ${unclaimed.toFixed(2)} CC, wallet CC: ${totalCC.toFixed(2)}`);
   res.json({ success: true, pnlBaseline });
+});
+
+// ─── POST /api/reset-earn — Reset earn baseline (manual) ───
+app.post('/api/reset-earn', (req, res) => {
+  resetEarnBaseline();
+  res.json({ success: true, earnBaseline });
 });
 
 // ─── Command Center ───

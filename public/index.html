@@ -96,7 +96,8 @@
           <span class="w-2 h-2 rounded-full bg-yellow-400 pulse-dot"></span>
           <span class="text-slate-300 text-[11px]" id="statusText">Connecting</span>
         </div>
-        <button onclick="resetPL()" class="glass rounded-lg px-3 py-1.5 text-[11px] text-slate-300 hover:text-white transition-all cursor-pointer">Reset</button>
+        <button onclick="resetPL()" class="glass rounded-lg px-3 py-1.5 text-[11px] text-slate-300 hover:text-white transition-all cursor-pointer">Reset P&L</button>
+        <button onclick="resetEarn()" class="glass rounded-lg px-3 py-1.5 text-[11px] text-amber-300 hover:text-white transition-all cursor-pointer">Reset Earn</button>
       </div>
     </div>
   </header>
@@ -265,14 +266,18 @@
     let ethPrice = 2500;
     let usdToIdr = 16500;
     let pnlBaseline = null; // From server
+    let earnBaseline = null; // Daily earn baseline (auto-reset at 10 AM)
 
     function loadBaseline() {
       // Fetch P&L baseline from server
       fetch('/api/health').then(r => r.json()).then(d => {
         if (d.pnlBaseline) {
           pnlBaseline = d.pnlBaseline;
-          render();
         }
+        if (d.earnBaseline) {
+          earnBaseline = d.earnBaseline;
+        }
+        render();
       }).catch(() => {});
     }
     function resetPL() {
@@ -280,6 +285,15 @@
       fetch('/api/reset-pnl', { method: 'POST' }).then(r => r.json()).then(d => {
         if (d.pnlBaseline) {
           pnlBaseline = d.pnlBaseline;
+          render();
+        }
+      }).catch(() => {});
+    }
+    function resetEarn() {
+      // Reset earn baseline on server
+      fetch('/api/reset-earn', { method: 'POST' }).then(r => r.json()).then(d => {
+        if (d.earnBaseline) {
+          earnBaseline = d.earnBaseline;
           render();
         }
       }).catch(() => {});
@@ -355,12 +369,29 @@
 
         document.getElementById('pnl').className = `mono text-xl sm:text-2xl font-bold ${cls}`;
         document.getElementById('pnl').textContent = `${sign}$${fmtNum(pl)}`;
-        document.getElementById('pnlDetail').innerHTML = `CC ${ccSign}${fmtNum(ccChange)} <span class="${ccCls}">${ccChange < 0 ? '⚠️ sangkut' : '✅'}</span> · ${sign}$${fmtNum(pl)}`;
+        
+        // CC sangkut detection — count wallets with stuck status
+        let stuckCount = 0;
+        let stuckWallets = [];
+        for (const [vpsId, vps] of Object.entries(allData)) {
+          for (const w of (vps.wallets || [])) {
+            if (w.error) continue;
+            const st = (w.status || '').toLowerCase();
+            if (st.includes('stuck') || st.includes('sangkut') || st.includes('waiting funds')) {
+              stuckCount++;
+              stuckWallets.push(w.name);
+            }
+          }
+        }
+        const stuckText = stuckCount > 0 ? ` · ⚠️ ${stuckCount} wallet stuck` : '';
+        const stuckCls = stuckCount > 0 ? 'text-rose-400' : 'text-emerald-400';
+        
+        document.getElementById('pnlDetail').innerHTML = `CC ${ccSign}${fmtNum(ccChange)} <span class="${ccCls}">${ccChange < 0 ? '⚠️ sangkut' : '✅'}</span>${stuckText} · ${sign}$${fmtNum(pl)}`;
         const el = document.getElementById('totalAssetsPnl');
         if (el) { el.textContent = `${sign}$${fmtNum(pl)}`; el.className = `mono font-semibold ${cls}`; }
       }
 
-      // Earn — use D.Rew directly from bot
+      // Earn — use D.Rew directly from bot, subtract baseline for daily
       let earnTotal = 0;
       for (const [vpsId, vps] of Object.entries(allData)) {
         for (const w of (vps.wallets || [])) {
@@ -368,10 +399,12 @@
           earnTotal += (w.rewards || {}).drew || 0;
         }
       }
-      const earnUsd = earnTotal * ccPrice;
-      const earnCls = earnTotal >= 0 ? 'pl-positive' : 'pl-negative';
+      const baselineDrew = earnBaseline?.totalDrew || 0;
+      const dailyEarn = earnTotal - baselineDrew;
+      const earnUsd = dailyEarn * ccPrice;
+      const earnCls = dailyEarn >= 0 ? 'pl-positive' : 'pl-negative';
       document.getElementById('earn').className = `mono text-xl sm:text-2xl font-bold ${earnCls}`;
-      document.getElementById('earn').textContent = `${fmtNum(earnTotal)} CC`;
+      document.getElementById('earn').textContent = `${fmtNum(dailyEarn)} CC`;
       document.getElementById('earnDetail').textContent = `$${fmtNum(earnUsd)} · pending ${fmtNum(t.unclaimed)} CC`;
 
       // Prices
@@ -539,6 +572,13 @@
           render();
           cacheData();
           document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+        } catch {}
+      });
+      es.addEventListener('earn-reset', (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          earnBaseline = data.earnBaseline;
+          render();
         } catch {}
       });
       es.onerror = () => {
