@@ -143,7 +143,7 @@
       <div class="glass rounded-xl p-4 card-enter stat-card stat-card-purple card-purple" style="animation-delay:0.2s">
         <div class="text-[10px] text-slate-400 tracking-wider uppercase mb-2 font-medium">Portfolio</div>
         <div class="mono text-xl sm:text-2xl font-bold gradient-purple" id="portfolio">$0</div>
-        <div class="text-[10px] text-purple-400/50 mt-1">USD value</div>
+        <div class="text-[10px] text-purple-400/50 mt-1" id="portfolioDetail">USD value</div>
       </div>
     </div>
 
@@ -333,6 +333,7 @@
       document.getElementById('unclaimedUsd').textContent = '$' + fmtNum(t.unclaimed * ccPrice) + ' · CC pending';
       document.getElementById('claimedUsd').textContent = '$' + fmtNum(t.claimed * ccPrice) + ' · CC earned';
       document.getElementById('portfolio').textContent = '$' + fmtNum(t.portfolioUsd);
+      document.getElementById('portfolioDetail').textContent = '$' + fmtNum(t.portfolioUsd) + ' USDT · Rp ' + Math.round(t.portfolioUsd * usdToIdr).toLocaleString('id-ID');
       // Total Assets = Portfolio + Unclaimed (all inclusive)
       const unclaimedUsd = t.unclaimed * ccPrice;
       const totalAssetsUsd = t.portfolioUsd + unclaimedUsd;
