@@ -428,7 +428,7 @@
       document.getElementById('usdIdr').textContent = `Rp ${Math.round(usdToIdr).toLocaleString('id-ID')}`;
       document.getElementById('assetCC').textContent = fmtNum(t.cc);
       document.getElementById('assetUSDCx').textContent = fmtNum(t.usdcx);
-      document.getElementById('assetCETH').textContent = fmtNum(t.ceth);
+      document.getElementById('assetCETH').textContent = t.ceth.toFixed(8);
       document.getElementById('assetRCC').textContent = fmtNum(t.rccBal);
       document.getElementById('assetSwaps').textContent = t.swaps.toLocaleString();
       document.getElementById('activeAccounts').textContent = `${t.success}/${t.total}`;
@@ -487,7 +487,7 @@
               </td>
               <td class="px-3 py-2.5 text-right mono text-[11px] font-semibold bg-gradient-to-r from-emerald-300 to-teal-400 bg-clip-text text-transparent">${fmtNum(ccVal)}</td>
               <td class="px-3 py-2.5 text-right mono text-[11px] text-blue-300">${fmtNum(usdcxVal)}</td>
-              <td class="px-3 py-2.5 text-right mono text-[11px] text-amber-300">${fmtNum(cethVal)}</td>
+              <td class="px-3 py-2.5 text-right mono text-[11px] text-amber-300">${cethVal.toFixed(8)}</td>
               <td class="px-3 py-2.5 text-right mono text-[11px] font-semibold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">${fmtNum(rccVal)}</td>
               <td class="px-3 py-2.5 text-right mono text-[11px] text-slate-300">${swapsVal}</td>
               <td class="px-3 py-2.5 text-right mono text-[10px] text-cyan-400/70">${uptimeStr}</td>
