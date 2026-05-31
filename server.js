@@ -55,6 +55,32 @@ function saveData() {
 
 loadData();
 
+// ─── Auto-reset P&L baseline on server start ───
+function autoResetPnlBaseline() {
+  let latest = null;
+  for (const [key, val] of store) latest = val;
+  if (!latest) return; // No data yet, will reset on first push
+
+  const wallets = latest.wallets || [];
+  const price = latest.price?.price || 0.16;
+  const ethPrice = latest.ethPrice || 2500;
+
+  let portfolioUsd = 0, unclaimed = 0, totalCC = 0;
+  for (const w of wallets) {
+    if (w.error) continue;
+    const b = w.balance || {};
+    const r = w.rewards || {};
+    totalCC += (b.CC || 0);
+    portfolioUsd += (b.CC || 0) * price + (b.rCC || 0) * price + (b.USDCx || 0) + (b.cETH || 0) * ethPrice;
+    unclaimed += r.unclaimed || 0;
+  }
+
+  pnlBaseline = { portfolioUsd, unclaimed, totalCC, timestamp: Date.now() };
+  saveData();
+  console.log(`[P&L] Auto-reset on startup: $${portfolioUsd.toFixed(2)}, ${unclaimed.toFixed(2)} CC, wallet CC: ${totalCC.toFixed(2)}`);
+}
+autoResetPnlBaseline();
+
 // ─── Root route: inject live data into HTML ───
 app.get('/', (req, res) => {
   let html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
