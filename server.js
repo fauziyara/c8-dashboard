@@ -56,10 +56,15 @@ function saveData() {
 loadData();
 
 // ─── Auto-reset P&L baseline on server start ───
+let pnlResetOnStartup = false;
 function autoResetPnlBaseline() {
   let latest = null;
   for (const [key, val] of store) latest = val;
-  if (!latest) return; // No data yet, will reset on first push
+  if (!latest) {
+    pnlResetOnStartup = true; // Will reset on first push
+    console.log(`[P&L] No data on startup, will reset on first push`);
+    return;
+  }
 
   const wallets = latest.wallets || [];
   const price = latest.price?.price || 0.16;
@@ -177,6 +182,25 @@ app.post('/api/push', (req, res) => {
     uptimeSince: startedAt || firstReceivedAt,
     botUptime: botUptime || ''
   });
+
+  // Auto-reset P&L baseline on first push after startup
+  if (pnlResetOnStartup) {
+    pnlResetOnStartup = false;
+    const w = wallets || [];
+    const p = price?.price || 0.16;
+    const ep = ethPrice || 2500;
+    let portfolioUsd = 0, unclaimed = 0, totalCC = 0;
+    for (const wallet of w) {
+      if (wallet.error) continue;
+      const b = wallet.balance || {};
+      const r = wallet.rewards || {};
+      totalCC += (b.CC || 0);
+      portfolioUsd += (b.CC || 0) * p + (b.rCC || 0) * p + (b.USDCx || 0) + (b.cETH || 0) * ep;
+      unclaimed += r.unclaimed || 0;
+    }
+    pnlBaseline = { portfolioUsd, unclaimed, totalCC, timestamp: Date.now() };
+    console.log(`[P&L] Auto-reset on first push: $${portfolioUsd.toFixed(2)}, ${unclaimed.toFixed(2)} CC, wallet CC: ${totalCC.toFixed(2)}`);
+  }
 
   // Broadcast to all SSE clients
   broadcastSSE('update', {
