@@ -133,12 +133,12 @@
       <div class="glass rounded-xl p-4 card-enter stat-card stat-card-emerald" style="animation-delay:0.1s">
         <div class="text-[10px] text-slate-400 tracking-wider uppercase mb-2 font-medium">Unclaimed</div>
         <div class="mono text-xl sm:text-2xl font-bold gradient-emerald" id="unclaimed">0</div>
-        <div class="text-[10px] text-emerald-400/60 mt-1">CC pending</div>
+        <div class="text-[10px] text-emerald-400/60 mt-1" id="unclaimedUsd">CC pending</div>
       </div>
       <div class="glass rounded-xl p-4 card-enter stat-card stat-card-white" style="animation-delay:0.15s">
         <div class="text-[10px] text-slate-400 tracking-wider uppercase mb-2 font-medium">Claimed</div>
         <div class="mono text-xl sm:text-2xl font-bold text-slate-100" id="claimed">0</div>
-        <div class="text-[10px] text-slate-400 mt-1">CC earned</div>
+        <div class="text-[10px] text-slate-400 mt-1" id="claimedUsd">CC earned</div>
       </div>
       <div class="glass rounded-xl p-4 card-enter stat-card stat-card-purple card-purple" style="animation-delay:0.2s">
         <div class="text-[10px] text-slate-400 tracking-wider uppercase mb-2 font-medium">Portfolio</div>
@@ -330,6 +330,8 @@
       const t = getTotals();
       document.getElementById('unclaimed').textContent = fmtNum(t.unclaimed);
       document.getElementById('claimed').textContent = fmtNum(t.claimed);
+      document.getElementById('unclaimedUsd').textContent = '$' + fmtNum(t.unclaimed * ccPrice) + ' · CC pending';
+      document.getElementById('claimedUsd').textContent = '$' + fmtNum(t.claimed * ccPrice) + ' · CC earned';
       document.getElementById('portfolio').textContent = '$' + fmtNum(t.portfolioUsd);
       // Total Assets = Portfolio + Unclaimed (all inclusive)
       const unclaimedUsd = t.unclaimed * ccPrice;
