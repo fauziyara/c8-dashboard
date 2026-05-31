@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>C8 Kardi</title>
+  <title>C8 Kardi — CANTOR8 Dashboard</title>
   <link rel="icon" href="/logo.jpg">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -12,18 +12,50 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #080c16; color: #e2e8f0; min-height: 100vh; }
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: #080c16; 
+      color: #e2e8f0; 
+      min-height: 100vh;
+      position: relative;
+    }
+    
+    /* Crypto-themed background pattern */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 20%, rgba(168,85,247,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(52,211,153,0.06) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(59,130,246,0.04) 0%, transparent 50%);
+      z-index: -1;
+    }
+    
+    /* Grid pattern overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 50px 50px;
+      z-index: -1;
+      opacity: 0.5;
+    }
+    
     .mono { font-family: 'JetBrains Mono', monospace; }
 
     .glass {
-      background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
       transition: all 0.3s;
     }
     .glass:hover {
-      border-color: rgba(0,229,160,0.25);
-      box-shadow: 0 4px 24px rgba(0,229,160,0.06);
+      border-color: rgba(0,229,160,0.3);
+      box-shadow: 0 4px 24px rgba(0,229,160,0.08);
     }
 
     .card-enter { animation: cardIn 0.5s cubic-bezier(0.16,1,0.3,1) both; }
@@ -45,18 +77,18 @@
     .pl-positive { color: #34d399; }
     .pl-negative { color: #f87171; }
 
-    .card-emerald { border-color: rgba(52,211,153,0.2); }
-    .card-purple { border-color: rgba(168,85,247,0.2); }
-    .card-amber { border-color: rgba(251,191,36,0.15); }
-    .card-cyan { border-color: rgba(34,211,238,0.15); }
+    .card-emerald { border-color: rgba(52,211,153,0.25); }
+    .card-purple { border-color: rgba(168,85,247,0.25); }
+    .card-amber { border-color: rgba(251,191,36,0.2); }
+    .card-cyan { border-color: rgba(34,211,238,0.2); }
 
     .stat-card { position: relative; overflow: hidden; }
     .stat-card::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0;
-      height: 2px;
-      border-radius: 2px 2px 0 0;
+      height: 3px;
+      border-radius: 3px 3px 0 0;
     }
     .stat-card-emerald::before { background: linear-gradient(90deg, #34d399, #10b981, transparent); }
     .stat-card-white::before { background: linear-gradient(90deg, #94a3b8, #64748b, transparent); }
@@ -66,38 +98,56 @@
 
     .badge {
       display: inline-flex; align-items: center; gap: 4px;
-      padding: 2px 8px; border-radius: 6px;
-      font-size: 10px; font-weight: 500;
+      padding: 3px 10px; border-radius: 6px;
+      font-size: 11px; font-weight: 600;
     }
 
     table tbody tr { transition: background 0.2s; }
-    table tbody tr:hover { background: rgba(255,255,255,0.03); }
+    table tbody tr:hover { background: rgba(255,255,255,0.04); }
 
     .market-bar {
-      background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-      border: 1px solid rgba(255,255,255,0.06);
+      background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    /* Floating crypto icons animation */
+    .crypto-float {
+      position: fixed;
+      opacity: 0.03;
+      font-size: 120px;
+      z-index: -1;
+      animation: float 20s infinite ease-in-out;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(5deg); }
     }
   </style>
 </head>
 <body>
 
+  <!-- Floating crypto icons background -->
+  <div class="crypto-float" style="top: 10%; left: 5%;">₿</div>
+  <div class="crypto-float" style="top: 60%; right: 10%; animation-delay: -5s;">Ξ</div>
+  <div class="crypto-float" style="bottom: 20%; left: 15%; animation-delay: -10s;">◈</div>
+
   <!-- Header -->
-  <header class="border-b border-white/[0.06] px-4 sm:px-6 py-4">
+  <header class="border-b border-white/[0.08] px-4 sm:px-6 py-4" style="background: linear-gradient(180deg, rgba(8,12,22,0.95), rgba(8,12,22,0.8));">
     <div class="max-w-6xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <img src="/logo.jpg" alt="C8" class="w-9 h-9 rounded-xl object-cover ring-1 ring-white/10">
+        <img src="/logo.jpg" alt="C8" class="w-10 h-10 rounded-xl object-cover ring-2 ring-emerald-500/30">
         <div>
-          <h1 class="text-base font-bold gradient-text tracking-tight">C8 Kardi</h1>
-          <p class="text-[10px] text-slate-400 tracking-wide">CANTOR8 DASHBOARD</p>
+          <h1 class="text-lg font-bold gradient-text tracking-tight">C8 Kardi</h1>
+          <p class="text-xs text-slate-300 tracking-wide font-medium">CANTOR8 DASHBOARD</p>
         </div>
       </div>
       <div class="flex items-center gap-3">
-        <div id="status" class="flex items-center gap-2 text-xs">
-          <span class="w-2 h-2 rounded-full bg-yellow-400 pulse-dot"></span>
-          <span class="text-slate-300 text-[11px]" id="statusText">Connecting</span>
+        <div id="status" class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-yellow-400 pulse-dot"></span>
+          <span class="text-slate-200 text-xs font-medium" id="statusText">Connecting</span>
         </div>
-        <button onclick="resetPL()" class="glass rounded-lg px-3 py-1.5 text-[11px] text-slate-300 hover:text-white transition-all cursor-pointer">Reset P&L</button>
-        <button onclick="resetEarn()" class="glass rounded-lg px-3 py-1.5 text-[11px] text-amber-300 hover:text-white transition-all cursor-pointer">Reset Earn</button>
+        <button onclick="resetPL()" class="glass rounded-lg px-4 py-2 text-xs text-slate-200 hover:text-white transition-all cursor-pointer font-medium">Reset P&L</button>
+        <button onclick="resetEarn()" class="glass rounded-lg px-4 py-2 text-xs text-amber-300 hover:text-white transition-all cursor-pointer font-medium">Reset Earn</button>
       </div>
     </div>
   </header>
@@ -105,157 +155,153 @@
   <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
 
     <!-- Total Assets Hero -->
-    <div class="rounded-2xl p-5 sm:p-6 mb-5 card-enter stat-card" style="animation-delay:0.05s; background: linear-gradient(135deg, rgba(168,85,247,0.08), rgba(59,130,246,0.05), rgba(6,8,22,0.9)); border: 1px solid rgba(168,85,247,0.15);">
+    <div class="rounded-2xl p-6 sm:p-8 mb-6 card-enter stat-card" style="animation-delay:0.05s; background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(59,130,246,0.06), rgba(6,8,22,0.95)); border: 1px solid rgba(168,85,247,0.2);">
       <div class="flex items-start justify-between">
         <div>
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-sm">💎</span>
-            <span class="text-xs text-purple-300 font-semibold tracking-wide">TOTAL ASET</span>
-            <span class="badge" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2)"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span><span class="text-emerald-300">LIVE</span></span>
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xl">💎</span>
+            <span class="text-sm text-purple-200 font-semibold tracking-wide">TOTAL ASET</span>
+            <span class="badge" style="background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.25)"><span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span><span class="text-emerald-200">LIVE</span></span>
           </div>
-          <div class="mono text-3xl sm:text-4xl font-bold text-white drop-shadow-lg" id="totalAssets">$0</div>
+          <div class="mono text-4xl sm:text-5xl font-bold text-white drop-shadow-lg" id="totalAssets">$0</div>
         </div>
         <div class="text-right">
-          <div class="text-[10px] text-slate-400 mb-1 tracking-wide">IDR</div>
-          <div class="mono text-lg sm:text-xl font-bold gradient-cyan" id="totalAssetsIdr">Rp 0</div>
+          <div class="text-sm text-slate-300 mb-2 font-medium">IDR</div>
+          <div class="mono text-xl sm:text-2xl font-bold gradient-cyan" id="totalAssetsIdr">Rp 0</div>
         </div>
       </div>
-      <div class="mt-4 pt-3 border-t border-white/[0.06] flex flex-wrap gap-x-5 gap-y-1 text-xs">
-        <span class="text-slate-400">Balance <span class="text-white mono font-semibold" id="totalAssetsCC">$0</span></span>
-        <span class="text-slate-400">Other <span class="text-white mono font-semibold" id="totalAssetsOther">$0</span></span>
-        <span class="text-slate-400">Pending <span class="text-amber-400 mono font-semibold" id="totalAssetsReward">$0</span></span>
-        <span class="text-slate-400">P&L <span class="mono font-semibold" id="totalAssetsPnl">+$0</span></span>
+      <div class="mt-5 pt-4 border-t border-white/[0.08] flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        <span class="text-slate-300">Balance <span class="text-white mono font-semibold" id="totalAssetsCC">$0</span></span>
+        <span class="text-slate-300">Other <span class="text-white mono font-semibold" id="totalAssetsOther">$0</span></span>
+        <span class="text-slate-300">Pending <span class="text-amber-300 mono font-semibold" id="totalAssetsReward">$0</span></span>
+        <span class="text-slate-300">P&L <span class="mono font-semibold" id="totalAssetsPnl">+$0</span></span>
       </div>
     </div>
 
     <!-- Stat Cards: 3 cols -->
-    <div class="grid grid-cols-3 gap-3 sm:gap-4 mb-5">
-      <div class="glass rounded-xl p-4 card-enter stat-card stat-card-emerald" style="animation-delay:0.1s">
-        <div class="text-[10px] text-slate-400 tracking-wider uppercase mb-2 font-medium">Unclaimed</div>
-        <div class="mono text-xl sm:text-2xl font-bold gradient-emerald" id="unclaimed">0</div>
-        <div class="text-[10px] text-emerald-400/60 mt-1" id="unclaimedUsd">CC pending</div>
+    <div class="grid grid-cols-3 gap-4 sm:gap-5 mb-6">
+      <div class="glass rounded-xl p-5 card-enter stat-card stat-card-emerald" style="animation-delay:0.1s">
+        <div class="text-sm text-slate-300 tracking-wider uppercase mb-3 font-semibold">Unclaimed</div>
+        <div class="mono text-2xl sm:text-3xl font-bold gradient-emerald" id="unclaimed">0</div>
+        <div class="text-xs text-emerald-300/70 mt-2 font-medium" id="unclaimedUsd">CC pending</div>
       </div>
-      <div class="glass rounded-xl p-4 card-enter stat-card stat-card-white" style="animation-delay:0.15s">
-        <div class="text-[10px] text-slate-400 tracking-wider uppercase mb-2 font-medium">Claimed</div>
-        <div class="mono text-xl sm:text-2xl font-bold text-slate-100" id="claimed">0</div>
-        <div class="text-[10px] text-slate-400 mt-1" id="claimedUsd">CC earned</div>
+      <div class="glass rounded-xl p-5 card-enter stat-card stat-card-white" style="animation-delay:0.15s">
+        <div class="text-sm text-slate-300 tracking-wider uppercase mb-3 font-semibold">Claimed</div>
+        <div class="mono text-2xl sm:text-3xl font-bold text-slate-100" id="claimed">0</div>
+        <div class="text-xs text-slate-400 mt-2 font-medium" id="claimedUsd">CC earned</div>
       </div>
-      <div class="glass rounded-xl p-4 card-enter stat-card stat-card-purple card-purple" style="animation-delay:0.2s">
-        <div class="text-[10px] text-slate-400 tracking-wider uppercase mb-2 font-medium">Portfolio</div>
-        <div class="mono text-xl sm:text-2xl font-bold gradient-purple" id="portfolio">$0</div>
-        <div class="text-[10px] text-purple-400/50 mt-1" id="portfolioDetail">USD value</div>
+      <div class="glass rounded-xl p-5 card-enter stat-card stat-card-purple card-purple" style="animation-delay:0.2s">
+        <div class="text-sm text-slate-300 tracking-wider uppercase mb-3 font-semibold">Portfolio</div>
+        <div class="mono text-2xl sm:text-3xl font-bold gradient-purple" id="portfolio">$0</div>
+        <div class="text-xs text-purple-300/60 mt-2 font-medium" id="portfolioDetail">USD value</div>
       </div>
     </div>
 
     <!-- P&L + Earn: 2 cols -->
-    <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-5">
-      <div class="glass rounded-xl p-4 card-enter stat-card stat-card-green" style="animation-delay:0.25s">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-[10px] text-slate-400 tracking-wider uppercase font-medium">P&L</span>
-          <span class="badge text-slate-400" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">keseluruhan</span>
+    <div class="grid grid-cols-2 gap-4 sm:gap-5 mb-6">
+      <div class="glass rounded-xl p-5 card-enter stat-card stat-card-green" style="animation-delay:0.25s">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-sm text-slate-300 tracking-wider uppercase font-semibold">P&L</span>
+          <span class="badge text-slate-300" style="background:rgba(148,163,184,0.1);border:1px solid rgba(148,163,184,0.15)">keseluruhan</span>
         </div>
-        <div class="mono text-xl sm:text-2xl font-bold" id="pnl">0</div>
-        <div class="text-[10px] text-slate-400 mt-1" id="pnlDetail">keseluruhan</div>
+        <div class="mono text-2xl sm:text-3xl font-bold gradient-emerald" id="pnl">+$0</div>
+        <div class="text-xs text-slate-400 mt-2" id="pnlDetail">keseluruhan</div>
       </div>
-      <div class="glass rounded-xl p-4 card-enter stat-card stat-card-amber" style="animation-delay:0.3s">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-[10px] text-slate-400 tracking-wider uppercase font-medium">Earn</span>
-          <span class="badge text-amber-300" style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.15)">hari ini</span>
+      <div class="glass rounded-xl p-5 card-enter stat-card stat-card-amber" style="animation-delay:0.3s">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-sm text-slate-300 tracking-wider uppercase font-semibold">Earn</span>
+          <span class="badge text-amber-300" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.15)">hari ini</span>
         </div>
-        <div class="mono text-xl sm:text-2xl font-bold" id="earn">0</div>
-        <div class="text-[10px] text-slate-400 mt-1" id="earnDetail">reward only</div>
+        <div class="mono text-2xl sm:text-3xl font-bold gradient-amber" id="earn">0</div>
+        <div class="text-xs text-slate-400 mt-2" id="earnDetail">reward only</div>
       </div>
     </div>
 
     <!-- Market Info Bar -->
-    <div class="market-bar rounded-xl px-4 py-3 mb-5 card-enter" style="animation-delay:0.35s">
+    <div class="market-bar rounded-xl px-5 py-4 mb-6 card-enter" style="animation-delay:0.35s">
       <!-- Row 1: Price -->
-      <div class="flex items-center justify-between text-xs mb-2">
-        <div class="flex items-center gap-2">
-          <span class="text-emerald-400 font-bold">CC</span>
-          <span class="mono font-bold text-white text-sm" id="ccPrice">$0.16</span>
-          <span class="mono font-semibold text-[11px] px-1.5 py-0.5 rounded" id="ccChange">0%</span>
+      <div class="flex items-center justify-between text-sm mb-3">
+        <div class="flex items-center gap-3">
+          <span class="text-emerald-300 font-bold text-base">CC</span>
+          <span class="mono font-bold text-white text-lg" id="ccPrice">$0.16</span>
+          <span class="mono font-semibold text-xs px-2 py-1 rounded" id="ccChange">0%</span>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-slate-500">USD/IDR</span>
-          <span class="mono font-bold text-cyan-300" id="usdIdr">Rp 16,500</span>
+        <div class="flex items-center gap-3">
+          <span class="text-slate-400 font-medium">USD/IDR</span>
+          <span class="mono font-bold text-cyan-200 text-base" id="usdIdr">Rp 16,500</span>
         </div>
       </div>
       <!-- Divider -->
-      <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-2"></div>
+      <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-3"></div>
       <!-- Row 2: Holdings -->
-      <div class="flex items-center justify-between text-[11px]">
-        <div class="flex items-center gap-3">
-          <span class="flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <span class="text-slate-400">CC</span>
+      <div class="flex items-center justify-between text-xs">
+        <div class="flex items-center gap-4">
+          <span class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="text-slate-300 font-medium">CC</span>
             <span class="mono text-white font-semibold" id="assetCC">0</span>
           </span>
-          <span class="flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-            <span class="text-slate-400">USDCx</span>
-            <span class="mono text-blue-300 font-semibold" id="assetUSDCx">0</span>
+          <span class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+            <span class="text-slate-300 font-medium">USDCx</span>
+            <span class="mono text-white font-semibold" id="assetUSDCx">0</span>
           </span>
-          <span class="flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-            <span class="text-slate-400">cETH</span>
-            <span class="mono text-amber-300 font-semibold" id="assetCETH">0</span>
+          <span class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span class="text-slate-300 font-medium">cETH</span>
+            <span class="mono text-white font-semibold" id="assetCETH">0</span>
           </span>
-          <span class="flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
-            <span class="text-slate-400">rCC</span>
-            <span class="mono text-yellow-300 font-semibold" id="assetRCC">0</span>
+          <span class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+            <span class="text-slate-300 font-medium">rCC</span>
+            <span class="mono text-white font-semibold" id="assetRCC">0</span>
           </span>
         </div>
-      </div>
-      <!-- Row 3: Stats -->
-      <div class="flex items-center justify-between text-[11px] mt-1.5 pt-1.5 border-t border-white/[0.05]">
-        <div class="flex items-center gap-3">
-          <span class="text-slate-500">Swaps</span>
-          <span class="mono text-white font-semibold" id="assetSwaps">0</span>
-          <span class="text-slate-600">·</span>
-          <span class="text-slate-500">Active</span>
-          <span class="mono text-emerald-300 font-semibold" id="activeAccounts">0/0</span>
+        <div class="flex items-center gap-4">
+          <span class="text-slate-400">Swaps <span class="mono text-white font-semibold" id="assetSwaps">0</span></span>
+          <span class="text-slate-400">Active <span class="mono text-emerald-300 font-semibold" id="activeAccounts">0/0</span></span>
         </div>
-        <span class="text-slate-600 mono text-[10px]" id="lastUpdate">-</span>
       </div>
     </div>
 
-    <!-- Wallets Table -->
+    <!-- Last Update -->
+    <div class="text-center mb-6">
+      <span class="text-xs text-slate-500">Last update: <span id="lastUpdate">-</span></span>
+    </div>
+
+    <!-- Wallet Table -->
     <div class="glass rounded-xl overflow-hidden card-enter" style="animation-delay:0.4s">
-      <div class="px-4 sm:px-5 py-3 border-b border-white/[0.06] flex items-center justify-between">
-        <h2 class="text-xs font-bold text-slate-300 tracking-wider uppercase flex items-center gap-2">Wallets <span id="walletCount" class="text-[10px] font-normal bg-teal-500/10 text-teal-400 px-2 py-0.5 rounded-full">0</span></h2>
-        <input type="text" id="search" placeholder="Search..." class="bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-slate-300 placeholder-slate-500 focus:outline-none focus:border-teal-500/40 w-32 sm:w-48 transition-all">
+      <div class="px-5 py-4 border-b border-white/[0.08] flex items-center justify-between">
+        <span class="text-sm text-slate-200 font-semibold">📊 Detail per Wallet</span>
+        <span class="text-xs text-slate-400" id="walletCount">0 wallets</span>
       </div>
       <div class="overflow-x-auto scrollbar-thin">
-        <table class="w-full">
+        <table class="w-full text-sm">
           <thead>
-            <tr class="text-[10px] text-slate-400 uppercase tracking-wider border-b border-white/[0.06]">
-              <th class="px-3 py-3 text-left font-semibold">#</th>
-              <th class="px-3 py-3 text-left font-semibold">Name</th>
-              <th class="px-3 py-3 text-right font-semibold text-emerald-400/60">CC</th>
-              <th class="px-3 py-3 text-right font-semibold text-blue-400/60">USDCx</th>
-              <th class="px-3 py-3 text-right font-semibold text-amber-400/60">cETH</th>
-              <th class="px-3 py-3 text-right font-semibold text-yellow-400/60">rCC</th>
-              <th class="px-3 py-3 text-right font-semibold">Swap</th>
-              <th class="px-3 py-3 text-right font-semibold text-cyan-400/60">Uptime</th>
-              <th class="px-3 py-3 text-right font-semibold text-emerald-400/60">Reward</th>
-              <th class="px-3 py-3 text-right font-semibold text-emerald-400/60">D.Rew</th>
-              <th class="px-3 py-3 text-right font-semibold text-purple-400/60">Rank</th>
+            <tr class="border-b border-white/[0.06]">
+              <th class="px-5 py-3 text-left font-semibold text-slate-300">#</th>
+              <th class="px-5 py-3 text-left font-semibold text-slate-300">Name</th>
+              <th class="px-5 py-3 text-right font-semibold text-emerald-300/70">CC</th>
+              <th class="px-5 py-3 text-right font-semibold text-blue-300/70">USDCx</th>
+              <th class="px-5 py-3 text-right font-semibold text-amber-300/70">cETH</th>
+              <th class="px-5 py-3 text-right font-semibold text-yellow-300/70">rCC</th>
+              <th class="px-5 py-3 text-right font-semibold text-slate-300/70">Swaps</th>
+              <th class="px-5 py-3 text-right font-semibold text-cyan-300/70">Uptime</th>
+              <th class="px-5 py-3 text-right font-semibold text-purple-300/70">D.Rew</th>
+              <th class="px-5 py-3 text-right font-semibold text-slate-300/70">Status</th>
             </tr>
           </thead>
-          <tbody id="walletTable">
-            <tr><td colspan="11" class="px-5 py-16 text-center text-slate-500 text-sm">Loading...</td></tr>
-          </tbody>
+          <tbody id="walletTable"></tbody>
         </table>
       </div>
     </div>
+
   </main>
 
-  <footer class="border-t border-white/[0.06] px-4 sm:px-6 py-4 mt-8">
-    <div class="max-w-6xl mx-auto flex items-center justify-between text-[10px] text-slate-500">
-      <span>C8 Kardi v2.1</span>
-      <span>CANTOR8</span>
+  <footer class="border-t border-white/[0.08] px-4 sm:px-6 py-5 mt-8">
+    <div class="max-w-6xl mx-auto flex items-center justify-between text-xs text-slate-400">
+      <span class="font-medium">C8 Kardi v2.1</span>
+      <span class="font-medium">CANTOR8</span>
     </div>
   </footer>
 
@@ -368,9 +414,9 @@
         const ccBase = pnlBaseline.totalCC || 0;
         const ccChange = ccNow - ccBase;
         const ccSign = ccChange >= 0 ? '+' : '';
-        const ccCls = ccChange >= 0 ? 'text-emerald-400' : 'text-rose-400';
+        const ccCls = ccChange >= 0 ? 'text-emerald-300' : 'text-rose-300';
 
-        document.getElementById('pnl').className = `mono text-xl sm:text-2xl font-bold ${cls}`;
+        document.getElementById('pnl').className = `mono text-2xl sm:text-3xl font-bold ${cls}`;
         document.getElementById('pnl').textContent = `${sign}$${fmtNum(pl)}`;
         
         // CC sangkut detection — count wallets with stuck status
@@ -387,7 +433,7 @@
           }
         }
         const stuckText = stuckCount > 0 ? ` · ⚠️ ${stuckCount} wallet stuck` : '';
-        const stuckCls = stuckCount > 0 ? 'text-rose-400' : 'text-emerald-400';
+        const stuckCls = stuckCount > 0 ? 'text-rose-300' : 'text-emerald-300';
         
         document.getElementById('pnlDetail').innerHTML = `CC ${ccSign}${fmtNum(ccChange)} <span class="${ccCls}">${ccChange < 0 ? '⚠️ sangkut' : '✅'}</span>${stuckText} · ${sign}$${fmtNum(pl)}`;
         const el = document.getElementById('totalAssetsPnl');
@@ -406,7 +452,7 @@
       const dailyEarn = earnTotal - baselineDrew;
       const earnUsd = dailyEarn * ccPrice;
       const earnCls = dailyEarn >= 0 ? 'pl-positive' : 'pl-negative';
-      document.getElementById('earn').className = `mono text-xl sm:text-2xl font-bold ${earnCls}`;
+      document.getElementById('earn').className = `mono text-2xl sm:text-3xl font-bold ${earnCls}`;
       document.getElementById('earn').textContent = `${fmtNum(dailyEarn)} CC`;
       document.getElementById('earnDetail').textContent = `$${fmtNum(earnUsd)} · pending ${fmtNum(t.unclaimed)} CC`;
 
@@ -417,7 +463,7 @@
           const change = (v.price.change24h || 0) * 100;
           const el = document.getElementById('ccChange');
           el.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
-          el.className = `mono font-semibold text-[11px] px-1.5 py-0.5 rounded ${change >= 0 ? 'text-emerald-400 bg-emerald-400/10' : 'text-rose-400 bg-rose-400/10'}`;
+          el.className = `mono font-semibold text-xs px-2 py-1 rounded ${change >= 0 ? 'text-emerald-300 bg-emerald-400/10' : 'text-rose-300 bg-rose-400/10'}`;
           break;
         }
       }
@@ -437,94 +483,81 @@
       } catch(e) { console.error('Render error:', e); }
     }
 
-    function calcUptime(since) {
-      if (!since) return '-';
-      const diff = Math.floor((Date.now() - new Date(since).getTime()) / 1000);
-      const h = Math.floor(diff / 3600);
-      const m = Math.floor((diff % 3600) / 60);
-      const s = diff % 60;
-      return `${h}h${String(m).padStart(2,'0')}m${String(s).padStart(2,'0')}s`;
-    }
-
     function renderWalletTable(totals) {
-      const search = (document.getElementById('search').value || '').toLowerCase();
-      let rows = []; let idx = 0; let totalWallets = 0;
-      // Totals
+      let html = '';
+      let i = 0;
       let tCC = 0, tUSDCx = 0, tCETH = 0, tRCC = 0, tSwaps = 0, tReward = 0, tDRew = 0;
-
+      
       for (const [vpsId, vps] of Object.entries(allData)) {
-        for (const w of (vps.wallets || [])) {
-          idx++;
-          if (w.error) continue;
-          totalWallets++;
-          const name = w.name || `Wallet ${idx}`;
-          if (search && !name.toLowerCase().includes(search) && !(w.wallet || '').toLowerCase().includes(search)) continue;
-          const b = w.balance || {}; const r = w.rewards || {};
+        const wallets = vps.wallets || [];
+        for (const w of wallets) {
+          i++;
+          if (w.error) {
+            html += `<tr class="border-b border-white/[0.04]">
+              <td class="px-5 py-3 text-slate-500">${i}</td>
+              <td class="px-5 py-3 text-rose-300">${w.name}</td>
+              <td colspan="8" class="px-5 py-3 text-rose-400/70 text-xs">${w.error}</td>
+            </tr>`;
+            continue;
+          }
+          const b = w.balance || {};
+          const r = w.rewards || {};
           const ccVal = b.CC || 0;
           const usdcxVal = b.USDCx || 0;
           const cethVal = b.cETH || 0;
           const rccVal = b.rCC || 0;
           const swapsVal = r.swaps || 0;
           const rewardVal = r.unclaimed || 0;
-          const rankVal = r.rank || 0;
-          const statusVal = w.status || '';
-          // D.Rew from bot directly
           const dRew = r.drew || 0;
-          // Totals
+          const statusVal = w.status || '';
+          const uptimeStr = w.uptime || '';
+
           tCC += ccVal; tUSDCx += usdcxVal; tCETH += cethVal; tRCC += rccVal;
           tSwaps += swapsVal; tReward += rewardVal; tDRew += dRew;
-          // Highlight
-          const isHigh = ccVal > 50 || rewardVal > 25;
-          const rowBg = isHigh ? 'bg-emerald-500/[0.03]' : '';
-          // Uptime per-wallet from bot screen, fallback to global
-          const uptimeStr = w.uptime || vps.botUptime || calcUptime(vps.uptimeSince);
-          const dRewCls = dRew >= 0 ? 'text-emerald-400' : 'text-red-400';
-          rows.push(`
-            <tr class="border-b border-white/[0.03] ${rowBg} hover:bg-white/[0.03] transition-colors">
-              <td class="px-3 py-2.5 text-[11px] text-slate-600 mono">${idx}</td>
-              <td class="px-3 py-2.5">
-                <div class="text-[11px] font-semibold text-slate-200">${name}</div>
-              </td>
-              <td class="px-3 py-2.5 text-right mono text-[11px] font-semibold bg-gradient-to-r from-emerald-300 to-teal-400 bg-clip-text text-transparent">${fmtNum(ccVal)}</td>
-              <td class="px-3 py-2.5 text-right mono text-[11px] text-blue-300">${fmtNum(usdcxVal)}</td>
-              <td class="px-3 py-2.5 text-right mono text-[11px] text-amber-300">${cethVal.toFixed(8)}</td>
-              <td class="px-3 py-2.5 text-right mono text-[11px] font-semibold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">${fmtNum(rccVal)}</td>
-              <td class="px-3 py-2.5 text-right mono text-[11px] text-slate-300">${swapsVal}</td>
-              <td class="px-3 py-2.5 text-right mono text-[10px] text-cyan-400/70">${uptimeStr}</td>
-              <td class="px-3 py-2.5 text-right mono text-[11px] text-emerald-400 font-semibold">${fmtNum(rewardVal)}</td>
-              <td class="px-3 py-2.5 text-right mono text-[11px] font-semibold ${dRewCls}">${dRew >= 0 ? '+' : ''}${fmtNum(dRew)}</td>
-              <td class="px-3 py-2.5 text-right mono text-[11px] text-purple-300">#${rankVal.toLocaleString()}</td>
-            </tr>`);
+
+          // Status styling
+          let statusCls = 'text-slate-400';
+          const st = statusVal.toLowerCase();
+          if (st.includes('done') || st.includes('idle')) statusCls = 'text-slate-500';
+          else if (st.includes('stuck') || st.includes('sangkut')) statusCls = 'text-rose-400';
+          else if (st.includes('swap') || st.includes('checking')) statusCls = 'text-emerald-400';
+          else if (st.includes('auth') || st.includes('recovering')) statusCls = 'text-amber-400';
+          else if (st.includes('reward-landed')) statusCls = 'text-purple-400';
+
+          html += `<tr class="border-b border-white/[0.04]">
+            <td class="px-5 py-3 text-slate-500">${i}</td>
+            <td class="px-5 py-3 font-medium text-slate-200">${w.name}</td>
+            <td class="px-5 py-3 text-right mono text-xs font-semibold bg-gradient-to-r from-emerald-300 to-teal-400 bg-clip-text text-transparent">${fmtNum(ccVal)}</td>
+            <td class="px-5 py-3 text-right mono text-xs text-blue-300">${fmtNum(usdcxVal)}</td>
+            <td class="px-5 py-3 text-right mono text-xs text-amber-300">${cethVal.toFixed(8)}</td>
+            <td class="px-5 py-3 text-right mono text-xs font-semibold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">${fmtNum(rccVal)}</td>
+            <td class="px-5 py-3 text-right mono text-xs text-slate-300">${swapsVal}</td>
+            <td class="px-5 py-3 text-right mono text-[11px] text-cyan-300/70">${uptimeStr}</td>
+            <td class="px-5 py-3 text-right mono text-xs ${dRew >= 0 ? 'text-emerald-300' : 'text-rose-300'}">${dRew >= 0 ? '+' : ''}${dRew.toFixed(2)}</td>
+            <td class="px-5 py-3 text-right text-xs ${statusCls}">${statusVal}</td>
+          </tr>`;
         }
       }
 
       // Total row
-      if (rows.length > 0) {
-        const dRewAllCls = tDRew >= 0 ? 'text-emerald-400' : 'text-red-400';
-        rows.push(`
-          <tr class="border-t-2 border-white/[0.08] bg-white/[0.02]">
-            <td class="px-3 py-2.5 text-[11px] text-slate-400 mono font-bold"></td>
-            <td class="px-3 py-2.5 text-[11px] text-slate-300 font-bold">TOTAL</td>
-            <td class="px-3 py-2.5 text-right mono text-[11px] font-bold text-emerald-400">${fmtNum(tCC)}</td>
-            <td class="px-3 py-2.5 text-right mono text-[11px] font-bold text-blue-300">${fmtNum(tUSDCx)}</td>
-            <td class="px-3 py-2.5 text-right mono text-[11px] font-bold text-amber-300">${fmtNum(tCETH)}</td>
-            <td class="px-3 py-2.5 text-right mono text-[11px] font-bold text-yellow-400">${fmtNum(tRCC)}</td>
-            <td class="px-3 py-2.5 text-right mono text-[11px] font-bold text-slate-300">${tSwaps}</td>
-            <td class="px-3 py-2.5 text-right mono text-[10px] text-cyan-400/50">-</td>
-            <td class="px-3 py-2.5 text-right mono text-[11px] font-bold text-emerald-400">${fmtNum(tReward)}</td>
-            <td class="px-3 py-2.5 text-right mono text-[11px] font-bold ${dRewAllCls}">${tDRew >= 0 ? '+' : ''}${fmtNum(tDRew)}</td>
-            <td class="px-3 py-2.5 text-right mono text-[11px] text-purple-400/30">-</td>
-          </tr>`);
-      }
+      html += `<tr class="bg-white/[0.03] font-semibold">
+        <td class="px-5 py-3"></td>
+        <td class="px-5 py-3 text-slate-200">TOTAL</td>
+        <td class="px-5 py-3 text-right mono text-xs text-emerald-300">${fmtNum(tCC)}</td>
+        <td class="px-5 py-3 text-right mono text-xs text-blue-300">${fmtNum(tUSDCx)}</td>
+        <td class="px-5 py-3 text-right mono text-xs text-amber-300">${tCETH.toFixed(8)}</td>
+        <td class="px-5 py-3 text-right mono text-xs text-yellow-300">${fmtNum(tRCC)}</td>
+        <td class="px-5 py-3 text-right mono text-xs text-slate-300">${tSwaps}</td>
+        <td class="px-5 py-3"></td>
+        <td class="px-5 py-3 text-right mono text-xs ${tDRew >= 0 ? 'text-emerald-300' : 'text-rose-300'}">${tDRew >= 0 ? '+' : ''}${tDRew.toFixed(2)}</td>
+        <td class="px-5 py-3"></td>
+      </tr>`;
 
-      document.getElementById('walletTable').innerHTML = rows.join('') ||
-        '<tr><td colspan="11" class="px-5 py-16 text-center text-slate-500 text-sm">No wallets found</td></tr>';
-
-      // Update wallet count
-      document.getElementById('walletCount').textContent = totalWallets;
+      document.getElementById('walletTable').innerHTML = html;
+      document.getElementById('walletCount').textContent = `${i} wallets`;
     }
 
-    // ─── Data persistence ───
+    // ─── Cache ───
     function cacheData() {
       try { localStorage.setItem('c8data', JSON.stringify(allData)); } catch {}
     }
@@ -533,15 +566,16 @@
         const s = localStorage.getItem('c8data');
         if (s) {
           const d = JSON.parse(s);
-          if (d && Object.keys(d).length > 0) {
-            allData = d;
-            render();
+          if (d && typeof d === 'object') {
+            for (const [key, val] of Object.entries(d)) { allData[key] = val; }
+            return true;
           }
         }
       } catch {}
+      return false;
     }
 
-    // ─── SSE + Polling Fallback ───
+    // ─── SSE ───
     let retryCount = 0;
     let sseConnected = false;
     let es = null;
@@ -558,7 +592,7 @@
             for (const [key, val] of Object.entries(d)) { allData[key] = val; }
             sseConnected = true;
             document.getElementById('statusText').textContent = 'Connected';
-            document.querySelector('#status .pulse-dot').className = 'w-2 h-2 rounded-full bg-emerald-400 pulse-dot';
+            document.querySelector('#status .pulse-dot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 pulse-dot';
             render();
             cacheData();
             document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
@@ -571,7 +605,7 @@
           allData[data.vps_id || 'default'] = data;
           sseConnected = true;
           document.getElementById('statusText').textContent = 'Connected';
-          document.querySelector('#status .pulse-dot').className = 'w-2 h-2 rounded-full bg-emerald-400 pulse-dot';
+          document.querySelector('#status .pulse-dot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 pulse-dot';
           render();
           cacheData();
           document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
@@ -587,7 +621,7 @@
       es.onerror = () => {
         retryCount++;
         document.getElementById('statusText').textContent = `Reconnecting${'.'.repeat(retryCount % 4)}`;
-        document.querySelector('#status .pulse-dot').className = 'w-2 h-2 rounded-full bg-yellow-400 pulse-dot';
+        document.querySelector('#status .pulse-dot').className = 'w-2.5 h-2.5 rounded-full bg-yellow-400 pulse-dot';
         sseConnected = false;
         es.close();
         setTimeout(connectSSE, Math.min(1000 * Math.pow(2, retryCount), 30000));
@@ -609,35 +643,9 @@
     }, 30000);
 
     // ─── Init: load data immediately, then connect SSE ───
+    if (loadCachedData()) { render(); }
     loadBaseline();
-
-    // Load server-injected data first (most reliable)
-    if (window.__INITIAL_DATA__ && Object.keys(window.__INITIAL_DATA__).length > 0) {
-      allData = window.__INITIAL_DATA__;
-      render();
-      cacheData();
-      document.getElementById('statusText').textContent = 'Connected';
-      document.querySelector('#status .pulse-dot').className = 'w-2 h-2 rounded-full bg-emerald-400 pulse-dot';
-      document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-    } else {
-      loadCachedData();
-    }
-
     connectSSE();
-
-    // Periodic refresh: fetch every 60s as backup
-    setInterval(() => {
-      fetch('/api/health').then(r => r.json()).then(d => {
-        if (d.latest) {
-          allData[d.latest.vps_id || 'default'] = d.latest;
-          render();
-          cacheData();
-          document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-        }
-      }).catch(() => {});
-    }, 60000);
-
-    document.getElementById('search').addEventListener('input', render);
   </script>
 </body>
 </html>
