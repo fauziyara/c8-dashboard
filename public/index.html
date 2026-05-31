@@ -288,7 +288,7 @@
               <th class="px-5 py-3 text-right font-semibold text-slate-300/70">Swaps</th>
               <th class="px-5 py-3 text-right font-semibold text-cyan-300/70">Uptime</th>
               <th class="px-5 py-3 text-right font-semibold text-purple-300/70">D.Rew</th>
-              <th class="px-5 py-3 text-right font-semibold text-slate-300/70">Status</th>
+              <th class="px-5 py-3 text-right font-semibold text-amber-300/70">Rank</th>
             </tr>
           </thead>
           <tbody id="walletTable"></tbody>
@@ -511,18 +511,10 @@
           const dRew = r.drew || 0;
           const statusVal = w.status || '';
           const uptimeStr = w.uptime || '';
+          const rankVal = r.rank || 0;
 
           tCC += ccVal; tUSDCx += usdcxVal; tCETH += cethVal; tRCC += rccVal;
           tSwaps += swapsVal; tReward += rewardVal; tDRew += dRew;
-
-          // Status styling
-          let statusCls = 'text-slate-400';
-          const st = statusVal.toLowerCase();
-          if (st.includes('done') || st.includes('idle')) statusCls = 'text-slate-500';
-          else if (st.includes('stuck') || st.includes('sangkut')) statusCls = 'text-rose-400';
-          else if (st.includes('swap') || st.includes('checking')) statusCls = 'text-emerald-400';
-          else if (st.includes('auth') || st.includes('recovering')) statusCls = 'text-amber-400';
-          else if (st.includes('reward-landed')) statusCls = 'text-purple-400';
 
           html += `<tr class="border-b border-white/[0.04]">
             <td class="px-5 py-3 text-slate-500">${i}</td>
@@ -534,7 +526,7 @@
             <td class="px-5 py-3 text-right mono text-xs text-slate-300">${swapsVal}</td>
             <td class="px-5 py-3 text-right mono text-[11px] text-cyan-300/70">${uptimeStr}</td>
             <td class="px-5 py-3 text-right mono text-xs ${dRew >= 0 ? 'text-emerald-300' : 'text-rose-300'}">${dRew >= 0 ? '+' : ''}${dRew.toFixed(2)}</td>
-            <td class="px-5 py-3 text-right text-xs ${statusCls}">${statusVal}</td>
+            <td class="px-5 py-3 text-right mono text-xs text-amber-300">#${rankVal}</td>
           </tr>`;
         }
       }
